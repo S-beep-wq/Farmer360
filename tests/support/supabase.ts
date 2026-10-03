@@ -11,6 +11,8 @@ export const TEST_PHONES = {
   integrationA: "+919999900001",
   integrationB: "+919999900002",
   integrationNoProfile: "+919999900003",
+  integrationBuyer: "+919999900014",
+  integrationBuyer2: "+919999900015",
   e2e: "+919999900004",
   e2eWrongCode: "+919999900005",
   e2eEdit: "+919999900006",
@@ -21,6 +23,8 @@ export const TEST_PHONES = {
   e2eHealth: "+919999900011",
   e2eDelete: "+919999900012",
   e2eProfile: "+919999900013",
+  e2eBuyer: "+919999900016",
+  e2eMarket: "+919999900017",
 } as const;
 
 function env(name: string): string {

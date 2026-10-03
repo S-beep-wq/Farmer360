@@ -15,7 +15,7 @@ const controlClass =
   "focus:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-200 aria-[invalid=true]:border-red-600";
 
 /** Required quantity of produce with its unit (kg, quintal, tonne). */
-function ProduceQuantityField(props: { t: Messages; label: string; hint?: string; values: Record<string, string>; error?: string }) {
+export function ProduceQuantityField(props: { t: Messages; label: string; hint?: string; values: Record<string, string>; error?: string }) {
   const { t, values } = props;
   return (
     <Field label={props.label} hint={props.hint} error={props.error}>

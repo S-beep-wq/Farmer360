@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getFarmerForUser } from "@/features/farmer/repository";
+import { getBuyerForUser } from "@/features/market/repository";
 import type { ErrorKey } from "@/lib/i18n";
 import { isLocale } from "@/lib/i18n";
 import { setLocaleCookie } from "@/lib/i18n/server";
@@ -58,13 +59,15 @@ async function verifyOtp(formData: FormData): Promise<LoginState> {
     return { step: "otp", phone, formError: authErrorKey(error?.status, "wrongCode") };
   }
 
-  // Returning farmers get the app in the language they chose before.
+  // Returning farmers and buyers get the app in the language they chose before.
   const farmer = await getFarmerForUser(supabase, data.user.id);
-  if (farmer && isLocale(farmer.preferred_language)) {
-    await setLocaleCookie(farmer.preferred_language);
+  const buyer = farmer ? null : await getBuyerForUser(supabase, data.user.id);
+  const language = (farmer ?? buyer)?.preferred_language;
+  if (isLocale(language)) {
+    await setLocaleCookie(language);
   }
 
-  redirect(farmer ? "/farms" : "/onboarding");
+  redirect(farmer ? "/farms" : buyer ? "/buyer" : "/onboarding");
 }
 
 /** Registration and login are one flow: send a code to the phone, then verify it. */

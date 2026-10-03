@@ -1,16 +1,16 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Page, PageTitle } from "@/components/ui/layout";
 import { createFarmerProfileAction } from "@/features/farmer/actions";
 import { ProfileForm } from "@/features/farmer/components/ProfileForm";
-import { getFarmerForUser } from "@/features/farmer/repository";
-import { requireUser } from "@/lib/auth";
+import { getRoleHome, requireUser } from "@/lib/auth";
 import { getServerMessages } from "@/lib/i18n/server";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function OnboardingPage() {
   const user = await requireUser();
-  if (await getFarmerForUser(await createClient(), user.id)) redirect("/farms");
+  const home = await getRoleHome(user.id);
+  if (home !== "/onboarding") redirect(home);
   const { locale, t } = await getServerMessages();
 
   return (
@@ -18,6 +18,12 @@ export default async function OnboardingPage() {
       <PageTitle>{t.onboarding.title}</PageTitle>
       <p className="text-lg text-stone-700">{t.onboarding.intro}</p>
       <ProfileForm t={t} locale={locale} action={createFarmerProfileAction} submitLabel={t.onboarding.submit} />
+      <Link
+        href="/onboarding/buyer"
+        className="mt-4 flex min-h-12 w-fit items-center rounded-lg px-1 text-lg font-medium text-green-800 underline underline-offset-4 focus:outline-none focus:ring-4 focus:ring-green-300"
+      >
+        {t.buyerOnboarding.link}
+      </Link>
     </Page>
   );
 }

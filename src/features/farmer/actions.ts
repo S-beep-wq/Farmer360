@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { getBuyerForUser, updateBuyerLanguage } from "@/features/market/repository";
 import { getCurrentUser, requireFarmer, requireUser } from "@/lib/auth";
 import { fieldErrorsFrom, formValues, type FormState } from "@/lib/forms";
 import { isLocale } from "@/lib/i18n";
@@ -67,6 +68,8 @@ export async function setLanguageAction(formData: FormData) {
     const supabase = await createClient();
     if (await getFarmerForUser(supabase, user.id)) {
       await updateFarmerLanguage(supabase, user.id, locale);
+    } else if (await getBuyerForUser(supabase, user.id)) {
+      await updateBuyerLanguage(supabase, user.id, locale);
     }
   }
 

@@ -105,6 +105,13 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
         />
       ) : null}
       <SpentSoFar t={t} locale={locale} {...spent} />
+      {/* Harvest → search buyers (USER_WORKFLOWS.md section 14). */}
+      {cycle.status === "ACTIVE" || cycle.status === "HARVESTED" ? (
+        <LinkButton href={`/market?crop=${cycle.crop.id}`} variant="secondary">
+          {format(t.market.findForCrop, { crop: cropName(cycle.crop, locale) })}
+        </LinkButton>
+      ) : null}
+
       <ActivityList t={t} locale={locale} items={activities} cropHref={cropHref} canAdd={recording} />
       <ExpenseList t={t} locale={locale} items={expenses} cropHref={cropHref} canAdd={recording} />
 

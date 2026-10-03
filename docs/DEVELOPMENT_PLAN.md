@@ -134,11 +134,25 @@ ready and protected, but choosing and validating an AI service is a separate dec
 | Changing the language switches the app and is remembered | ✅ |
 | Integration and end-to-end tests | ✅ |
 
+## Slice 11 — Buyer discovery ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `buyers`, `buyer_demands`, `demand_interests`, one role per login, RLS | ✅ |
+| Buyer registration ("Not a farmer? Register as a buyer"), with consent to show contact details | ✅ |
+| Buyer publishes demand: crop, quantity, confirmed or indicative, quality, date, place, pickup, payment terms | ✅ |
+| Buyer's demand list (farmers interested), demand page with interested farmers and call buttons | ✅ |
+| Buyer closes demand (bought enough / cancelled), with confirmation | ✅ |
+| Farmer market: filter by crop, place (district / state / anywhere) and quantity they have | ✅ |
+| Demand page for farmers: confirmed vs indicative, verified or not, no-guarantee note, call the buyer | ✅ |
+| "I'm interested" (shares name, village and phone with that buyer only, after a tick), with a message | ✅ |
+| Links from "My farms" and from a crop in the field or harvested; buyer profile, edit and deletion | ✅ |
+| Unit, integration (roles, privacy, filters) and end-to-end tests | ✅ |
+
 ## Next slices (proposed, not started)
 
 1. Government scheme / insurance information (sections 10–11) — needs verified source data.
-2. Buyer discovery (section 14) — the marketplace `buyers` table.
-3. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
+2. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
    a confidence/uncertainty design and field validation.
 
 ## Open questions for the product owner
@@ -158,6 +172,16 @@ ready and protected, but choosing and validating an AI service is a separate dec
 - Should vegetables be recorded in pieces or crates as well as kg/quintal? Today only weight units
   are supported, so sales can be checked against the harvest.
 - Should a sale record how much money has been received so far (for "partly paid")?
+- Buyer verification is done by the team directly in the database. Who verifies buyers, how
+  (documents, visit), and is an admin screen needed?
+- Should demand carry an offered price? The spec's buyer fields do not include one, so it is not
+  built; buyers can only write payment terms.
+- The quantity filter shows buyers who need **at most** what the farmer has (demand the farmer can
+  fill alone). Should it also show bigger buyers who may take part of their need?
+- Buyers cannot edit published demand (only close it and publish a new one), and farmers cannot
+  withdraw an interest. Are these needed?
+- All signed-in farmers can see every buyer's phone number. Should it be shown only for open
+  demand, or only after a farmer says they are interested?
 - Account deletion is immediate and permanent. Should there be a waiting period (for example,
   7 days to change one's mind), or an export of the farmer's records before deleting?
 - Changing the mobile number (e.g. a new SIM) needs a verified OTP to the new number. Not built;

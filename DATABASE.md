@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.10 |
+| **Version** | 0.11 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -663,11 +663,23 @@ updated_at
 
 Buyer information requires appropriate access controls.
 
-**Not created yet (v0.6).** This table describes buyers for buyer discovery (a marketplace
-feature with verification). Recording the farmer's own sale does not need it, and creating
-marketplace buyer records from farmers' private sales would mix two different things. Sales
-store the buyer as the farmer describes it (`sales.buyer_type` and `sales.buyer_name`); a
-nullable `sales.buyer_id` can be added when buyer discovery is built.
+### Implemented (v0.11)
+
+- Buyers sign in with their phone like farmers. A login is **either a farmer or a buyer**: the
+  `one_role_per_user()` trigger refuses a buyer profile for a farmer's login and the reverse.
+- Also stored: `user_id`, `state`, `district`, `location` (town or market) and
+  `preferred_language`. `phone` is copied from the verified login by the same trigger as farmers.
+- `buyer_type`: `LOCAL_TRADER`, `MANDI`, `FPO`, `COMPANY`, `OTHER`.
+- `verification_status` is `NOT_VERIFIED` (default) or `VERIFIED`. Buyers cannot write it (no
+  column grant). The Kisan 360 team verifies a buyer after checking them, directly in the
+  database (there is no admin screen yet):
+  `update public.buyers set verification_status = 'VERIFIED' where phone = '+91…';`
+- RLS: a buyer sees and changes only their own profile. **Signed-in farmers can see all buyers,
+  including their phone number**, so they can call them. Buyers agree to this when registering.
+  Buyers cannot see other buyers, and nobody signed out sees any.
+- Account deletion (section 3) removes a buyer with their demand and the interest in it.
+- Sales still store the buyer as the farmer describes it (`sales.buyer_type`, `sales.buyer_name`).
+  Linking a sale to a registered buyer (`sales.buyer_id`) is not built.
 
 ## 15. `buyer_demands`
 
@@ -699,6 +711,41 @@ FULFILLED
 EXPIRED
 CANCELLED
 ```
+
+### Implemented (v0.11)
+
+- Also stored: `demand_type`, `state`, `district`, `pickup_available`, `closed_at`, and
+  `quantity_kg` (generated from `quantity` and `quantity_unit`, which is `kg`, `quintal` or
+  `tonne`). The location is `location` (town, market or village), `district` and `state`.
+- `demand_type` is `CONFIRMED` (the buyer commits to buy) or `INDICATIVE` (interest only). The
+  app never shows indicative demand as a sure sale, and always tells farmers that Kisan 360 does
+  not guarantee any sale, price or payment (PRODUCT_SPEC.md section 15).
+- Demand is published as `ACTIVE` for a date that has not passed (in India time). After that a
+  buyer can only close it, once: `FULFILLED` or `CANCELLED` (the `buyer_demands_check` trigger and
+  a column grant on `demand_status` only). `DRAFT` and `EXPIRED` are not used yet. Active demand
+  whose date has passed is treated as expired by the app and the database.
+- RLS: a buyer sees only their own demand. Farmers see `ACTIVE` demand, plus any demand they
+  responded to (so they can see what happened to it).
+
+## 15a. `demand_interests`
+
+A farmer telling a buyer they are interested in a demand (implemented in v0.11).
+
+```text
+id
+demand_id
+farmer_id
+note
+created_at
+```
+
+- One per farmer and demand (`unique (demand_id, farmer_id)`), only on open demand (trigger).
+- Saying you are interested shares your name, village, district and phone with **that buyer
+  only**. The buyer reads them through `public.demand_interested_farmers(demand_id)` (security
+  definer, checks the demand is theirs) and never gets access to the `farmers` table.
+- A farmer sees only their own interests; a buyer sees the interests on their own demand (for
+  counting). Farmers write only `demand_id` and `note`.
+- Withdrawing an interest is not built.
 
 ## 16. `sales`
 
@@ -992,6 +1039,9 @@ Implemented in v0.2 for `farmers`, `farms` and `plots`:
 - There are **no DELETE policies** and `DELETE` is revoked: history is preserved (section 24).
   Deleting an auth user (account removal, section 3) cascades to their farmer data. A farmer can
   delete only their own user, through `public.delete_my_account()`.
+- Buyer discovery (v0.11) adds a second kind of user. See sections 14, 15 and 15a for what
+  farmers and buyers can see of each other. `public.current_buyer_id()` mirrors
+  `current_farmer_id()`.
 - The application only ever uses the publishable key with the farmer's session. The secret key is
   used only by local tests for cleanup.
 
@@ -1028,6 +1078,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003073427_slice8_crop_observations.sql` | `crop_observations` (column grants), `crop_photos`, `crop-photos` bucket and storage policies. |
 | `20261003075538_slice9_account_deletion.sql` | `farmers.deletion_requested_at`; request-gated photo delete policies; `account_photo_paths()`, `delete_my_account()`. |
 | `20261003082222_slice10_farmer_profile_editing.sql` | Column-level `UPDATE` grant on `farmers` (profile fields only). |
+| `20261003090045_slice11_buyer_discovery.sql` | `buyers`, `buyer_demands`, `demand_interests`; one role per login; `demand_interested_farmers()`; RLS. |
 
 
 Database migrations must be version-controlled.

@@ -5,7 +5,45 @@ export type Database = {
   
   "public": {
           Tables: {
-            "crop_activities": {
+            "buyer_demands": {
+                  Row: {
+                    "buyer_id": string,"closed_at": string | null,"created_at": string,"crop_id": string,"demand_status": string,"demand_type": string,"district": string,"id": string,"location": string,"payment_terms": string | null,"pickup_available": boolean,"quality_requirements": string | null,"quantity": number,"quantity_kg": number | null,"quantity_unit": string,"required_date": string,"state": string,"updated_at": string
+                  }
+                  Insert: {
+                    "buyer_id"?: string,"closed_at"?: string | null,"created_at"?: string,"crop_id": string,"demand_status"?: string,"demand_type": string,"district": string,"id"?: string,"location": string,"payment_terms"?: string | null,"pickup_available": boolean,"quality_requirements"?: string | null,"quantity": number,"quantity_kg"?: never,"quantity_unit": string,"required_date": string,"state": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "buyer_id"?: string,"closed_at"?: string | null,"created_at"?: string,"crop_id"?: string,"demand_status"?: string,"demand_type"?: string,"district"?: string,"id"?: string,"location"?: string,"payment_terms"?: string | null,"pickup_available"?: boolean,"quality_requirements"?: string | null,"quantity"?: number,"quantity_kg"?: never,"quantity_unit"?: string,"required_date"?: string,"state"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "buyer_demands_buyer_id_fkey"
+      columns: ["buyer_id"]
+isOneToOne: false
+      referencedRelation: "buyers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "buyer_demands_crop_id_fkey"
+      columns: ["crop_id"]
+isOneToOne: false
+      referencedRelation: "crop_catalog"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"buyers": {
+                  Row: {
+                    "buyer_type": string,"created_at": string,"district": string,"id": string,"location": string,"name": string,"organization_name": string | null,"phone": string | null,"preferred_language": string,"state": string,"updated_at": string,"user_id": string,"verification_status": string
+                  }
+                  Insert: {
+                    "buyer_type": string,"created_at"?: string,"district": string,"id"?: string,"location": string,"name": string,"organization_name"?: string | null,"phone"?: string | null,"preferred_language"?: string,"state": string,"updated_at"?: string,"user_id"?: string,"verification_status"?: string
+                  }
+                  Update: {
+                    "buyer_type"?: string,"created_at"?: string,"district"?: string,"id"?: string,"location"?: string,"name"?: string,"organization_name"?: string | null,"phone"?: string | null,"preferred_language"?: string,"state"?: string,"updated_at"?: string,"user_id"?: string,"verification_status"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"crop_activities": {
                   Row: {
                     "activity_date": string,"activity_type": string,"cost": number | null,"created_at": string,"crop_cycle_id": string,"deleted_at": string | null,"id": string,"notes": string | null,"quantity": number | null,"quantity_unit": string | null,"updated_at": string
                   }
@@ -109,6 +147,31 @@ isOneToOne: false
       columns: ["observation_id"]
 isOneToOne: false
       referencedRelation: "crop_observations"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"demand_interests": {
+                  Row: {
+                    "created_at": string,"demand_id": string,"farmer_id": string,"id": string,"note": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"demand_id": string,"farmer_id"?: string,"id"?: string,"note"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"demand_id"?: string,"farmer_id"?: string,"id"?: string,"note"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "demand_interests_demand_id_fkey"
+      columns: ["demand_id"]
+isOneToOne: false
+      referencedRelation: "buyer_demands"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "demand_interests_farmer_id_fkey"
+      columns: ["farmer_id"]
+isOneToOne: false
+      referencedRelation: "farmers"
       referencedColumns: ["id"]
     }
                   ]
@@ -263,17 +326,28 @@ isOneToOne: false
 "crop_photo_path_owned":
 { Args: { "p_name": string }; Returns: boolean
                            },
+"current_buyer_id":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "current_farmer_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "delete_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"demand_interested_farmers":
+{ Args: { "p_demand_id": string }; Returns: {
+              "created_at": string,"district": string,"full_name": string,"interest_id": string,"note": string,"phone": string,"village": string
+            }[]
+                           },
 "harvest_sold_kg":
 { Args: { "p_except_sale_id"?: string,"p_harvest_id": string }; Returns: number
                            },
 "owns_crop_cycle":
 { Args: { "p_crop_cycle_id": string }; Returns: boolean
+                           },
+"owns_demand":
+{ Args: { "p_demand_id": string }; Returns: boolean
                            },
 "owns_harvest":
 { Args: { "p_harvest_id": string }; Returns: boolean
@@ -286,6 +360,9 @@ isOneToOne: false
                            },
 "produce_unit_kg":
 { Args: { "p_unit": string }; Returns: number
+                           },
+"today_in_india":
+{ Args: Record<PropertyKey, never>; Returns: string
                            }
           }
           Enums: {
