@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { listActivities } from "@/features/crop-records/repository";
 import { loadCropPage } from "@/features/crops/page-data";
+import { loadObservations } from "@/features/observations/page-data";
 import { formatArea, formatMeasuredArea } from "@/features/plots/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,7 +20,11 @@ export async function loadSeasonPage(params: Promise<CropParams>) {
   if (cycle.status !== "HARVESTED" && cycle.status !== "COMPLETED") redirect(page.cropHref);
 
   const supabase = await createClient();
-  const [totals, activities] = await Promise.all([getCropTotals(supabase, cycle.id), listActivities(supabase, cycle.id)]);
+  const [totals, activities, health] = await Promise.all([
+    getCropTotals(supabase, cycle.id),
+    listActivities(supabase, cycle.id),
+    loadObservations(cycle.id),
+  ]);
   if (!totals) redirect(page.cropHref);
 
   const acres = plotAcres(plot);
@@ -32,5 +37,6 @@ export async function loadSeasonPage(params: Promise<CropParams>) {
     summary: seasonSummary(totals, acres),
     plotAreaText: acres ? plotAreaText : null,
     activityTypes: activities.map((a) => a.activity_type),
+    health,
   };
 }

@@ -11,7 +11,7 @@ and [`DATABASE.md`](./DATABASE.md). The build plan and progress are in
 and plot → add crops to a plot and track them (sown, harvest finished, cancelled, edited) →
 record work done and costs, with the total spent per crop → record harvests and sales, and see
 each crop's result (money from sales − costs) → review and close the season, with past results
-shown on the plot for planning the next crop.
+shown on the plot for planning the next crop → crop photos and notes over time (crop health timeline).
 The interface is in Hindi by default, with English available.
 
 ## Stack
@@ -30,7 +30,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900010`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900011`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run
@@ -65,6 +65,7 @@ src/
 │   ├── farmer/          # profile + language
 │   ├── farms/
 │   ├── harvest-sales/   # harvests, sales and the crop result
+│   ├── observations/    # crop photos and notes, health timeline (Supabase Storage)
 │   ├── plots/           # incl. location/ (map, GPS, boundary, geometry)
 │   ├── season-review/   # season review, crop totals view, closing a crop
 │   └── shared/          # land units, soil and irrigation values

@@ -98,12 +98,28 @@ Not included on purpose: undoing a status change (for example, "harvested" by mi
 The core loop from USER_WORKFLOWS.md section 20 now runs end to end, except crop photos and
 monitoring (sections 8–9), buyer discovery (section 14) and scheme/insurance information.
 
+## Slice 8 — Crop observations with photos ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `crop_observations` (farmers cannot write AI fields), `crop_photos`, private `crop-photos` bucket, storage policies | ✅ |
+| Add an observation: photo (made smaller in the browser) and/or note, how the crop looks, date | ✅ |
+| Photo kept in the form after an error; real image check on the server | ✅ |
+| "Serious problem" suggests showing the crop to an agriculture expert (KVK, block office) | ✅ |
+| Crop page "Crop health" section; timeline (Day N since sowing); remove an observation | ✅ |
+| Crop health history in the season review | ✅ |
+| Unit, integration (incl. storage policies) and end-to-end tests | ✅ |
+
+AI analysis of photos (USER_WORKFLOWS.md section 8, "if enabled") is not built: the columns are
+ready and protected, but choosing and validating an AI service is a separate decision.
+
 ## Next slices (proposed, not started)
 
-1. **Crop observations with photos** (USER_WORKFLOWS.md sections 8–9) — needs Supabase Storage;
-   adds the crop health history to the season review.
-2. Government scheme / insurance information (sections 10–11) — needs verified source data.
-3. Buyer discovery (section 14) — the marketplace `buyers` table.
+1. Government scheme / insurance information (sections 10–11) — needs verified source data.
+2. Buyer discovery (section 14) — the marketplace `buyers` table.
+3. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
+   a confidence/uncertainty design and field validation.
+4. Account deletion that also removes the farmer's photos from storage.
 
 ## Open questions for the product owner
 

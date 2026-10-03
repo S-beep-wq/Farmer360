@@ -114,9 +114,11 @@ port = 54324
 # sender_name = "Admin"
 
 [storage]
-enabled = false
+# Crop photos (see migration slice8_crop_observations). The bucket and its policies are created by
+# that migration, so they are the same locally and in production.
+enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
-file_size_limit = "50MiB"
+file_size_limit = "5MiB"
 
 # Uncomment to configure local storage buckets
 # [storage.buckets.images]
@@ -279,6 +281,7 @@ max_frequency = "5s"
 919999900008 = "123456"
 919999900009 = "123456"
 919999900010 = "123456"
+919999900011 = "123456"
 
 # Configure logged in session timeouts.
 # [auth.sessions]

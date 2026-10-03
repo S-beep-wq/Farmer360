@@ -68,6 +68,50 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"crop_observations": {
+                  Row: {
+                    "ai_analysis": Json | null,"ai_confidence": number | null,"created_at": string,"created_by": string,"crop_cycle_id": string,"deleted_at": string | null,"farmer_notes": string | null,"growth_stage": string | null,"health_status": string,"id": string,"observation_date": string,"updated_at": string
+                  }
+                  Insert: {
+                    "ai_analysis"?: Json | null,"ai_confidence"?: number | null,"created_at"?: string,"created_by"?: string,"crop_cycle_id": string,"deleted_at"?: string | null,"farmer_notes"?: string | null,"growth_stage"?: string | null,"health_status": string,"id"?: string,"observation_date": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "ai_analysis"?: Json | null,"ai_confidence"?: number | null,"created_at"?: string,"created_by"?: string,"crop_cycle_id"?: string,"deleted_at"?: string | null,"farmer_notes"?: string | null,"growth_stage"?: string | null,"health_status"?: string,"id"?: string,"observation_date"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "crop_observations_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
+      referencedRelation: "crop_cycle_totals"
+      referencedColumns: ["crop_cycle_id"]
+    },{
+      foreignKeyName: "crop_observations_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
+      referencedRelation: "crop_cycles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"crop_photos": {
+                  Row: {
+                    "captured_at": string | null,"created_at": string,"file_name": string,"file_size": number,"id": string,"mime_type": string,"observation_id": string,"storage_path": string,"uploaded_at": string
+                  }
+                  Insert: {
+                    "captured_at"?: string | null,"created_at"?: string,"file_name": string,"file_size": number,"id"?: string,"mime_type": string,"observation_id": string,"storage_path": string,"uploaded_at"?: string
+                  }
+                  Update: {
+                    "captured_at"?: string | null,"created_at"?: string,"file_name"?: string,"file_size"?: number,"id"?: string,"mime_type"?: string,"observation_id"?: string,"storage_path"?: string,"uploaded_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "crop_photos_observation_id_fkey"
+      columns: ["observation_id"]
+isOneToOne: false
+      referencedRelation: "crop_observations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"expenses": {
                   Row: {
                     "amount": number,"category": string,"created_at": string,"crop_cycle_id": string,"currency": string,"deleted_at": string | null,"expense_date": string,"id": string,"notes": string | null,"quantity": number | null,"quantity_unit": string | null,"updated_at": string,"vendor": string | null
@@ -210,6 +254,9 @@ isOneToOne: false
             "boundary_geojson":
 { Args: { "p": Database["public"]['Tables']["plots"]['Row'] }; Returns: Json
                            },
+"crop_photo_path_owned":
+{ Args: { "p_name": string }; Returns: boolean
+                           },
 "current_farmer_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -221,6 +268,9 @@ isOneToOne: false
                            },
 "owns_harvest":
 { Args: { "p_harvest_id": string }; Returns: boolean
+                           },
+"owns_observation":
+{ Args: { "p_observation_id": string }; Returns: boolean
                            },
 "owns_plot":
 { Args: { "p_plot_id": string }; Returns: boolean

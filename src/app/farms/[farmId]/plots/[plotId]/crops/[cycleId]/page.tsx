@@ -11,6 +11,9 @@ import { CropResultCard, HarvestList } from "@/features/harvest-sales/components
 import { cropResult } from "@/features/harvest-sales/economics";
 import { listHarvestsWithSales } from "@/features/harvest-sales/repository";
 import { canAddHarvest, canChangeHarvests } from "@/features/harvest-sales/rules";
+import { CropHealthSection } from "@/features/observations/components/CropHealthSection";
+import { loadObservations } from "@/features/observations/page-data";
+import { canAddObservation } from "@/features/observations/rules";
 import { format } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,10 +21,11 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
   const { farm, plot, cycle, cropHref, locale, t } = await loadCropPage(params);
   const actions = availableActions(cycle.status);
   const supabase = await createClient();
-  const [activities, expenses, harvests] = await Promise.all([
+  const [activities, expenses, harvests, health] = await Promise.all([
     listActivities(supabase, cycle.id),
     listExpenses(supabase, cycle.id),
     listHarvestsWithSales(supabase, cycle.id),
+    loadObservations(cycle.id),
   ]);
   const spent = spentSoFar(activities, expenses);
   const recording = canRecord(cycle.status);
@@ -77,6 +81,17 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
         </dl>
       </Card>
 
+      {cycle.status === "ACTIVE" || health.observations.length > 0 ? (
+        <CropHealthSection
+          t={t}
+          locale={locale}
+          observations={health.observations}
+          links={health.links}
+          sowingDate={cycle.actual_sowing_date}
+          cropHref={cropHref}
+          canAdd={canAddObservation(cycle.status)}
+        />
+      ) : null}
       {sales.length > 0 ? <CropResultCard t={t} locale={locale} {...result} /> : null}
       {harvestAllowed || harvests.length > 0 ? (
         <HarvestList

@@ -2,6 +2,7 @@ import { Page, PageTitle } from "@/components/ui/layout";
 import { formatDate, todayInIndia } from "@/features/crops/dates";
 import { cropName } from "@/features/crops/format";
 import { formatProduce } from "@/features/harvest-sales/format";
+import { CropHealthHistory } from "@/features/observations/components/CropHealthSection";
 import { completeSeasonAction } from "@/features/season-review/actions";
 import { SeasonReviewForm } from "@/features/season-review/components/SeasonForms";
 import { SeasonSummaryCard } from "@/features/season-review/components/SeasonSummaryCard";
@@ -10,7 +11,7 @@ import { displayWeight } from "@/features/season-review/summary";
 import { format } from "@/lib/i18n";
 
 export default async function SeasonReviewPage({ params }: PageProps<"/farms/[farmId]/plots/[plotId]/crops/[cycleId]/review">) {
-  const { cycle, ids, cropHref, locale, t, summary, plotAreaText, activityTypes } = await loadSeasonPage(params);
+  const { cycle, ids, cropHref, locale, t, summary, plotAreaText, activityTypes, health } = await loadSeasonPage(params);
 
   // Things worth checking before the records are frozen. None of them stops the farmer.
   const reminders: string[] = [];
@@ -34,6 +35,14 @@ export default async function SeasonReviewPage({ params }: PageProps<"/farms/[fa
         harvestDate={cycle.actual_harvest_date}
         plotAreaText={plotAreaText}
         activityTypes={activityTypes}
+      />
+      <CropHealthHistory
+        t={t}
+        locale={locale}
+        observations={health.observations}
+        links={health.links}
+        sowingDate={cycle.actual_sowing_date}
+        cropHref={cropHref}
       />
       {cycle.status === "HARVESTED" ? (
         <SeasonReviewForm t={t} action={completeSeasonAction.bind(null, ids)} reminders={reminders} />

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.7 |
+| **Version** | 0.8 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -480,6 +480,20 @@ updated_at
 
 **Important:** AI output must not overwrite farmer-provided observations.
 
+### Implemented (v0.8)
+
+- `health_status` (required): the farmer's own judgement — `HEALTHY`, `PROBLEM`, `SERIOUS`,
+  `NOT_SURE`. `growth_stage` exists but is not asked for yet.
+- `created_by` is `FARMER` (default) or `SYSTEM`; `deleted_at` added for soft deletion.
+- **Column grants:** farmers can insert only `crop_cycle_id`, `observation_date`, `growth_stage`,
+  `health_status` and `farmer_notes`, and can update only `deleted_at`. They cannot write
+  `ai_analysis`, `ai_confidence` or `created_by` at all, and cannot change a saved observation.
+  So AI output (added later, server-side) can never overwrite or pose as the farmer's own
+  observation.
+- New observations only for an `ACTIVE` crop, dated on or after its sowing date; nothing changes
+  once the crop is `COMPLETED`. Access uses `public.owns_crop_cycle()`.
+- An observation needs a photo or a note (checked by the app).
+
 ## 11. `crop_photos`
 
 Stores metadata for crop images.
@@ -501,6 +515,22 @@ created_at
 The actual image should be stored in Supabase Storage.
 
 The database stores metadata and the storage reference.
+
+### Implemented (v0.8)
+
+- Private Supabase Storage bucket `crop-photos` (created by the migration): JPEG, PNG or WebP,
+  at most 5 MB. Path: `{farmer_id}/{farm_id}/{plot_id}/{crop_cycle_id}/{observation_id}/{file}`
+  (SYSTEM_ARCHITECTURE.md section 9).
+- `public.crop_photo_path_owned(path)` checks that every folder in the path belongs to the
+  signed-in farmer, in order. The storage policies (upload and read) and the `crop_photos` insert
+  policy use it. There are no update or delete policies: photos cannot be replaced or deleted.
+- `crop_photos_path_matches_observation`: a photo row must point into its own observation's folder.
+- Photos are shown through signed links valid for one hour; the bucket is never public.
+- In the browser, photos are made smaller (at most 1600 px, JPEG) before upload, which also drops
+  their EXIF metadata such as GPS. The server checks the file's first bytes to confirm it is a
+  real JPEG, PNG or WebP image. `captured_at` is not filled yet.
+- Deleting an account removes the database rows (cascade) but not the files in storage; cleaning
+  up storage on account deletion is still to be done.
 
 ## 12. `expenses`
 
@@ -964,6 +994,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003054621_slice5_crop_activities_and_expenses.sql` | `crop_activities`, `expenses` (soft delete), `owns_crop_cycle()`; RLS. |
 | `20261003062409_slice6_harvests_and_sales.sql` | `harvests`, `sales` (generated amounts, oversell check), `owns_harvest()`; RLS. |
 | `20261003064819_slice7_season_review.sql` | `crop_cycles.completed_at`; payment updates after closing; `crop_cycle_totals` view. |
+| `20261003073427_slice8_crop_observations.sql` | `crop_observations` (column grants), `crop_photos`, `crop-photos` bucket and storage policies. |
 
 
 Database migrations must be version-controlled.

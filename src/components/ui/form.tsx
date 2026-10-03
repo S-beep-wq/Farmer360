@@ -224,12 +224,12 @@ export function ChoiceField({ legend, name, options, defaultValue, error, option
   );
 }
 
-export function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
+export function SubmitButton({ label, pendingLabel, disabled = false }: { label: string; pendingLabel: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="min-h-14 w-full rounded-xl bg-green-700 px-6 text-xl font-semibold text-white shadow-sm hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-70"
     >
       {pending ? pendingLabel : label}
