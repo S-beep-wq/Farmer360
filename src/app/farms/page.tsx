@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Page, PageTitle, LinkButton } from "@/components/ui/layout";
 import { listFarms } from "@/features/farms/repository";
 import { formatArea } from "@/features/plots/format";
+import { isAiEnabled } from "@/lib/ai";
 import { requireFarmer } from "@/lib/auth";
 import { format } from "@/lib/i18n";
 import { getServerMessages } from "@/lib/i18n/server";
@@ -46,6 +47,11 @@ export default async function FarmsPage() {
         </>
       )}
 
+      {isAiEnabled() && farms.length > 0 ? (
+        <LinkButton href="/assistant" variant="secondary">
+          {t.assistant.link}
+        </LinkButton>
+      ) : null}
       <LinkButton href="/market" variant="secondary">
         {t.market.link}
       </LinkButton>

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.15 |
+| **Version** | 0.16 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -976,6 +976,29 @@ Do not unnecessarily store sensitive raw conversations.
 
 Retention policies should be defined before production use.
 
+### Implemented (v0.16)
+
+Used by the AI farm assistant (USER_WORKFLOWS.md section 17). **Neither the question nor the
+answer is stored**: `input_summary` and `response_summary` are deliberately not created.
+
+```text
+id
+farmer_id               (defaults to the signed-in farmer)
+interaction_type        (FARM_QUESTION)
+model
+confidence              (LOW / MEDIUM / HIGH)
+asked_for_information   (the answer asked the farmer for missing facts)
+see_expert
+about_one_crop          (question about one crop, or the whole farm)
+farmer_feedback         (HELPFUL / NOT_HELPFUL / NOT_SURE, set afterwards)
+created_at
+```
+
+- Trigger: a row can only be for the signed-in farmer; at most 30 per farmer per day (India time).
+- RLS: own rows only. Farmers insert the metadata columns and later update only `farmer_feedback`.
+- Deleted with the farmer's account (cascade). Retention beyond that is still to be decided.
+- Crop-photo analyses are stored in `crop_health_analyses` (section 10a), not here.
+
 ## 21. Relationships
 
 Core relationship:
@@ -1154,6 +1177,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003092520_slice12_government_schemes.sql` | `government_schemes`, `scheme_texts`, `scheme_crops`; `import_scheme()` (service role); read-only RLS. |
 | `20261003094055_slice13_crop_insurance.sql` | `insurance_products`, `insurance_texts`, `insurance_crops`; `import_insurance_product()` (service role); read-only RLS. |
 | `20261003110337_slice15_crop_health_ai.sql` | `crop_health_analyses` (limits, feedback-only updates); RLS. |
+| `20261003114625_slice16_farm_assistant.sql` | `ai_interactions` (metadata only, daily limit, feedback-only updates); RLS. |
 
 
 Database migrations must be version-controlled.

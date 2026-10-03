@@ -14,6 +14,7 @@ import { canAddHarvest, canChangeHarvests } from "@/features/harvest-sales/rules
 import { CropHealthSection } from "@/features/observations/components/CropHealthSection";
 import { loadObservations } from "@/features/observations/page-data";
 import { canAddObservation } from "@/features/observations/rules";
+import { isAiEnabled } from "@/lib/ai";
 import { format } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 
@@ -105,6 +106,11 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
         />
       ) : null}
       <SpentSoFar t={t} locale={locale} {...spent} />
+      {isAiEnabled() && (cycle.status === "PLANNED" || cycle.status === "ACTIVE" || cycle.status === "HARVESTED") ? (
+        <LinkButton href={`/assistant?crop=${cycle.id}`} variant="secondary">
+          {format(t.assistant.askAboutCrop, { crop: cropName(cycle.crop, locale) })}
+        </LinkButton>
+      ) : null}
       {/* Crop cycle → insurance information (USER_WORKFLOWS.md section 11). */}
       {cycle.status === "PLANNED" || cycle.status === "ACTIVE" || cycle.status === "HARVESTED" ? (
         <LinkButton href={`${cropHref}/insurance`} variant="secondary">

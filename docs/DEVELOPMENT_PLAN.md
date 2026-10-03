@@ -214,13 +214,29 @@ Not built: the natural-language assistant ("What should I do today?", USER_WORKF
 The answers have not been checked by agronomists; field validation should review the stored
 answers and the farmers' feedback before wider use.
 
+## Slice 16 — AI farm assistant ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `ai_interactions` — metadata only (no question or answer text), 30 per day, feedback-only updates | ✅ |
+| "Ask a question about your farm" (from My farms) and "Ask a question about this crop" (from a crop) | ✅ |
+| Question in the farmer's own words, with example questions; whole farm or one crop | ✅ |
+| Context from the farmer's records only: crops and dates, costs, harvest/sales, plots, last 30 days of work and observations; no name, village or phone; "no weather data" stated | ✅ |
+| Structured answer: the answer, which records it used, what is missing (asked back), confidence, expert | ✅ |
+| Cautious rules: unsure with nothing to ask → expert; no records used → never "fairly sure"; no chemicals, no eligibility claims | ✅ |
+| Shared server-only AI set-up (`src/lib/ai.ts`) for both AI features; hidden without `ANTHROPIC_API_KEY` | ✅ |
+| Unit, integration (context from real records, AI call against a local stand-in) and end-to-end tests | ✅ |
+
+One question at a time (no conversation memory), and answers are not saved, by design (DATABASE.md
+section 20). Weather is not available to the assistant.
+
 ## Next slices (proposed, not started)
 
 1. Verified crop reference data for planning (duration, water and labour needs, typical cost and
    price ranges for the pilot district, which seasons each crop suits), loaded with a source and
    check date like schemes — needs a source agreed with agronomists.
-2. AI assistant for questions about the farm (USER_WORKFLOWS.md section 17), using the farm's own
-   records as context.
+2. Weather data from an authoritative provider (SYSTEM_ARCHITECTURE.md section 13), which would also
+   let the farm assistant answer "what should I do today?" better.
 
 ## Open questions for the product owner
 
@@ -259,6 +275,8 @@ answers and the farmers' feedback before wider use.
   7 days to change one's mind), or an export of the farmer's records before deleting?
 - Changing the mobile number (e.g. a new SIM) needs a verified OTP to the new number. Not built;
   today a farmer with a new number would start a new account.
+- Farm assistant: should farmers be able to see their earlier questions and answers (which would mean
+  storing them, with consent and a retention period)? Should it hold a short conversation?
 - AI crop-health help: who reviews the stored AI answers and feedback during field validation, and
   what accuracy is needed before it is offered widely? How long should AI answers be kept?
 - Hindi wording should be reviewed by a native speaker from the pilot area.

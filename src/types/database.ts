@@ -5,7 +5,26 @@ export type Database = {
   
   "public": {
           Tables: {
-            "buyer_demands": {
+            "ai_interactions": {
+                  Row: {
+                    "about_one_crop": boolean,"asked_for_information": boolean,"confidence": string,"created_at": string,"farmer_feedback": string | null,"farmer_id": string,"id": string,"interaction_type": string,"model": string,"see_expert": boolean
+                  }
+                  Insert: {
+                    "about_one_crop": boolean,"asked_for_information": boolean,"confidence": string,"created_at"?: string,"farmer_feedback"?: string | null,"farmer_id"?: string,"id"?: string,"interaction_type": string,"model": string,"see_expert": boolean
+                  }
+                  Update: {
+                    "about_one_crop"?: boolean,"asked_for_information"?: boolean,"confidence"?: string,"created_at"?: string,"farmer_feedback"?: string | null,"farmer_id"?: string,"id"?: string,"interaction_type"?: string,"model"?: string,"see_expert"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ai_interactions_farmer_id_fkey"
+      columns: ["farmer_id"]
+isOneToOne: false
+      referencedRelation: "farmers"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"buyer_demands": {
                   Row: {
                     "buyer_id": string,"closed_at": string | null,"created_at": string,"crop_id": string,"demand_status": string,"demand_type": string,"district": string,"id": string,"location": string,"payment_terms": string | null,"pickup_available": boolean,"quality_requirements": string | null,"quantity": number,"quantity_kg": number | null,"quantity_unit": string,"required_date": string,"state": string,"updated_at": string
                   }

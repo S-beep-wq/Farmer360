@@ -7,6 +7,8 @@ import { createServer, type Server } from "node:http";
 //   [fail]    → the API is down (HTTP 500)        [garbled] → an answer that is not valid JSON
 //   [serious-ai] → a confident answer that sends the farmer to an expert
 //   otherwise → a medium-confidence answer with two possible causes
+// Farm assistant questions (recognised by its instructions) use the same [fail]/[refuse]/[garbled]
+// markers, plus [unsure] (low confidence, nothing to ask) and [missing] (asks the farmer back).
 
 export const MOCK_ANSWER = {
   image_usable: true,
@@ -38,6 +40,29 @@ const SERIOUS = {
   see_expert: true,
   expert_reason: "Spots that spread fast can damage the whole field.",
 };
+
+export const MOCK_ASSISTANT_ANSWER = {
+  answer: "Your maize was sown 30 days ago. Check the field for weeds and whether the soil is dry.",
+  based_on: ["Maize sown 30 days ago on Back plot", "Weeding recorded 10 days ago"],
+  missing_information: [],
+  confidence: "MEDIUM",
+  see_expert: false,
+  expert_reason: null,
+};
+
+const ASSISTANT_UNSURE = { ...MOCK_ASSISTANT_ANSWER, answer: "I cannot tell from your records.", based_on: [], confidence: "LOW" };
+const ASSISTANT_MISSING = {
+  ...MOCK_ASSISTANT_ANSWER,
+  answer: "It depends on the variety you sowed.",
+  missing_information: ["Which maize variety did you sow?"],
+  confidence: "LOW",
+};
+
+function assistantAnswer(question: string) {
+  if (question.includes("[unsure]")) return ASSISTANT_UNSURE;
+  if (question.includes("[missing]")) return ASSISTANT_MISSING;
+  return MOCK_ASSISTANT_ANSWER;
+}
 
 export type MockRequest = { path: string; body: Record<string, unknown> };
 
@@ -75,6 +100,7 @@ export async function startMockAnthropic(port = 0): Promise<{ server: Server; ur
       if (note.includes("[fail]")) return send(500, { type: "error", error: { type: "api_error", message: "mock failure" } });
       if (note.includes("[refuse]")) return send(200, message("", "refusal"));
       if (note.includes("[garbled]")) return send(200, message("this is not json"));
+      if (String(body.system ?? "").includes("farm assistant")) return send(200, message(JSON.stringify(assistantAnswer(note))));
       if (note.includes("[blurry]")) return send(200, message(JSON.stringify(BLURRY)));
       if (note.includes("[serious-ai]")) return send(200, message(JSON.stringify(SERIOUS)));
       return send(200, message(JSON.stringify(MOCK_ANSWER)));
