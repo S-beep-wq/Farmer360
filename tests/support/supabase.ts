@@ -17,6 +17,7 @@ export const TEST_PHONES = {
   e2eCrops: "+919999900007",
   e2eRecords: "+919999900008",
   e2eHarvest: "+919999900009",
+  e2eSeason: "+919999900010",
 } as const;
 
 function env(name: string): string {

@@ -20,6 +20,12 @@ export type Database = {
       foreignKeyName: "crop_activities_crop_cycle_id_fkey"
       columns: ["crop_cycle_id"]
 isOneToOne: false
+      referencedRelation: "crop_cycle_totals"
+      referencedColumns: ["crop_cycle_id"]
+    },{
+      foreignKeyName: "crop_activities_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
       referencedRelation: "crop_cycles"
       referencedColumns: ["id"]
     }
@@ -39,13 +45,13 @@ isOneToOne: false
                   ]
                 },"crop_cycles": {
                   Row: {
-                    "actual_harvest_date": string | null,"actual_sowing_date": string | null,"created_at": string,"crop_id": string,"current_growth_stage": string | null,"expected_harvest_date": string | null,"id": string,"notes": string | null,"planned_sowing_date": string | null,"plot_id": string,"season": string,"status": string,"updated_at": string,"variety_name": string | null
+                    "actual_harvest_date": string | null,"actual_sowing_date": string | null,"completed_at": string | null,"created_at": string,"crop_id": string,"current_growth_stage": string | null,"expected_harvest_date": string | null,"id": string,"notes": string | null,"planned_sowing_date": string | null,"plot_id": string,"season": string,"status": string,"updated_at": string,"variety_name": string | null
                   }
                   Insert: {
-                    "actual_harvest_date"?: string | null,"actual_sowing_date"?: string | null,"created_at"?: string,"crop_id": string,"current_growth_stage"?: string | null,"expected_harvest_date"?: string | null,"id"?: string,"notes"?: string | null,"planned_sowing_date"?: string | null,"plot_id": string,"season": string,"status"?: string,"updated_at"?: string,"variety_name"?: string | null
+                    "actual_harvest_date"?: string | null,"actual_sowing_date"?: string | null,"completed_at"?: string | null,"created_at"?: string,"crop_id": string,"current_growth_stage"?: string | null,"expected_harvest_date"?: string | null,"id"?: string,"notes"?: string | null,"planned_sowing_date"?: string | null,"plot_id": string,"season": string,"status"?: string,"updated_at"?: string,"variety_name"?: string | null
                   }
                   Update: {
-                    "actual_harvest_date"?: string | null,"actual_sowing_date"?: string | null,"created_at"?: string,"crop_id"?: string,"current_growth_stage"?: string | null,"expected_harvest_date"?: string | null,"id"?: string,"notes"?: string | null,"planned_sowing_date"?: string | null,"plot_id"?: string,"season"?: string,"status"?: string,"updated_at"?: string,"variety_name"?: string | null
+                    "actual_harvest_date"?: string | null,"actual_sowing_date"?: string | null,"completed_at"?: string | null,"created_at"?: string,"crop_id"?: string,"current_growth_stage"?: string | null,"expected_harvest_date"?: string | null,"id"?: string,"notes"?: string | null,"planned_sowing_date"?: string | null,"plot_id"?: string,"season"?: string,"status"?: string,"updated_at"?: string,"variety_name"?: string | null
                   }
                   Relationships: [
                     {
@@ -74,6 +80,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "expenses_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
+      referencedRelation: "crop_cycle_totals"
+      referencedColumns: ["crop_cycle_id"]
+    },{
       foreignKeyName: "expenses_crop_cycle_id_fkey"
       columns: ["crop_cycle_id"]
 isOneToOne: false
@@ -128,6 +140,12 @@ isOneToOne: false
       foreignKeyName: "harvests_crop_cycle_id_fkey"
       columns: ["crop_cycle_id"]
 isOneToOne: false
+      referencedRelation: "crop_cycle_totals"
+      referencedColumns: ["crop_cycle_id"]
+    },{
+      foreignKeyName: "harvests_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
       referencedRelation: "crop_cycles"
       referencedColumns: ["id"]
     }
@@ -173,7 +191,20 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "crop_cycle_totals": {
+                  Row: {
+                    "crop_cycle_id": string | null,"expense_total": number | null,"harvested_kg": number | null,"revenue": number | null,"selling_costs": number | null,"sold_kg": number | null,"unpaid_sales": number | null,"work_costs": number | null
+                  }
+                  Insert: {
+                           "crop_cycle_id"?: string | null,"expense_total"?: never,"harvested_kg"?: never,"revenue"?: never,"selling_costs"?: never,"sold_kg"?: never,"unpaid_sales"?: never,"work_costs"?: never
+                         }
+                        Update: {
+                           "crop_cycle_id"?: string | null,"expense_total"?: never,"harvested_kg"?: never,"revenue"?: never,"selling_costs"?: never,"sold_kg"?: never,"unpaid_sales"?: never,"work_costs"?: never
+                         }
+                        Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
             "boundary_geojson":

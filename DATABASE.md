@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.6 |
+| **Version** | 0.7 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -378,7 +378,7 @@ PLANNED   → ACTIVE      sowing recorded (actual_sowing_date set)
 PLANNED   → CANCELLED
 ACTIVE    → HARVESTED   harvest finished (actual_harvest_date set)
 ACTIVE    → CANCELLED   e.g. the crop was lost
-HARVESTED → COMPLETED   season review (not built yet)
+HARVESTED → COMPLETED   season review (v0.7)
 ```
 
 - A new cycle must be `PLANNED` or `ACTIVE`.
@@ -387,6 +387,30 @@ HARVESTED → COMPLETED   season review (not built yet)
 - `plot_id` cannot change: a cycle's history belongs to the plot it was grown on.
 - The app updates a cycle only if it still has the status the farmer saw
   (`... where status = <seen status>`), so two changes made at the same time cannot both apply.
+
+### Season review (v0.7)
+
+The season review (USER_WORKFLOWS.md section 16) closes a `HARVESTED` crop as `COMPLETED`:
+
+- The farmer's notes for next season are saved in `crop_cycles.notes`.
+- `completed_at` (added in v0.7) is set by the status trigger to the database's own clock when
+  the crop becomes `COMPLETED`, and is empty otherwise (`crop_cycles_completed_at_matches_status`).
+  The app cannot set it.
+- A `COMPLETED` crop and all its activities, expenses, harvests and sales are frozen, **except
+  a sale's `payment_status`**: buyers often pay after the season is closed, so `sales_check`
+  allows an update that changes nothing but the payment status.
+- Because the records are frozen, the season's totals are calculated, not copied: see the
+  `crop_cycle_totals` view below. Crop health history is not part of the review yet, because
+  crop observations (section 10) are not built.
+
+### `crop_cycle_totals` view (v0.7)
+
+One row per crop cycle: `work_costs`, `expense_total`, `harvested_kg`, `sold_kg`, `revenue`,
+`selling_costs` and `unpaid_sales`, excluding removed entries. It is a `security_invoker` view, so
+RLS on the underlying tables applies and a farmer only gets totals for their own crops; signed-out
+visitors have no access. The net result is `revenue − work_costs − expense_total − selling_costs`,
+the same formula the crop page uses (an integration test checks they agree). The plot page uses
+it to show the result of each completed season, for planning the next crop.
 
 `actual_harvest_date` is the day the harvest **finished** (for crops picked many times, the last
 picking). Harvest quantities and quality belong to the `harvests` table (section 13), which is
@@ -939,6 +963,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003053318_slice4_crop_status_changes.sql` | Crop status transition trigger; harvest-date/status constraint. |
 | `20261003054621_slice5_crop_activities_and_expenses.sql` | `crop_activities`, `expenses` (soft delete), `owns_crop_cycle()`; RLS. |
 | `20261003062409_slice6_harvests_and_sales.sql` | `harvests`, `sales` (generated amounts, oversell check), `owns_harvest()`; RLS. |
+| `20261003064819_slice7_season_review.sql` | `crop_cycles.completed_at`; payment updates after closing; `crop_cycle_totals` view. |
 
 
 Database migrations must be version-controlled.

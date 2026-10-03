@@ -158,3 +158,18 @@ export function updateSale(supabase: ServerSupabaseClient, harvestId: string, id
 export function removeSale(supabase: ServerSupabaseClient, harvestId: string, id: string) {
   return updateSaleRow(supabase, harvestId, id, { deleted_at: new Date().toISOString() });
 }
+
+/**
+ * Updates only a sale's payment status. This is the one change allowed after the season is
+ * completed, because buyers often pay later (the database enforces this).
+ */
+export async function updateSalePayment(supabase: ServerSupabaseClient, harvestId: string, id: string, paymentStatus: string) {
+  const { data, error } = await supabase
+    .from("sales")
+    .update({ payment_status: paymentStatus })
+    .eq("harvest_id", harvestId)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select("id");
+  return { updated: Boolean(data?.length), error };
+}

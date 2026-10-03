@@ -83,13 +83,27 @@ Not included on purpose: undoing a status change (for example, "harvested" by mi
 | Edit and remove harvests and sales (a harvest with sales cannot be removed) | ✅ |
 | Unit, integration and end-to-end tests | ✅ |
 
+## Slice 7 — Season review ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `completed_at` (set by the database), payment-only updates after closing, `crop_cycle_totals` view | ✅ |
+| Review page: dates and days in the field, total cost, harvest, harvest per acre, sold, revenue, selling costs, net result, work done | ✅ |
+| Reminders before closing (no harvest, unsold produce, unpaid sales) — they do not block | ✅ |
+| Notes for next season; "Save season and close crop" sets COMPLETED | ✅ |
+| After closing: read-only review, sales can still be marked as paid | ✅ |
+| Plot page shows each closed season's profit or loss, for planning the next crop | ✅ |
+| Unit, integration and end-to-end tests | ✅ |
+
+The core loop from USER_WORKFLOWS.md section 20 now runs end to end, except crop photos and
+monitoring (sections 8–9), buyer discovery (section 14) and scheme/insurance information.
+
 ## Next slices (proposed, not started)
 
-1. **Season review** (USER_WORKFLOWS.md section 16): a summary of the crop (costs, harvest,
-   revenue, net result, activities, notes) that the farmer saves, which sets `COMPLETED`.
-2. Crop observations with photos (sections 8–9) — needs Supabase Storage.
-3. Government scheme / insurance information (sections 10–11).
-4. Buyer discovery (section 14) — the marketplace `buyers` table.
+1. **Crop observations with photos** (USER_WORKFLOWS.md sections 8–9) — needs Supabase Storage;
+   adds the crop health history to the season review.
+2. Government scheme / insurance information (sections 10–11) — needs verified source data.
+3. Buyer discovery (section 14) — the marketplace `buyers` table.
 
 ## Open questions for the product owner
 

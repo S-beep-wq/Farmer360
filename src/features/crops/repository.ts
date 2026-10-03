@@ -16,7 +16,7 @@ export type Crop = Awaited<ReturnType<typeof listCrops>>[number];
 
 const CYCLE_COLUMNS =
   "id, plot_id, season, status, variety_name, planned_sowing_date, actual_sowing_date, expected_harvest_date, " +
-  "actual_harvest_date, current_growth_stage, created_at, crop:crop_catalog(id, name, name_hi)";
+  "actual_harvest_date, current_growth_stage, notes, completed_at, created_at, crop:crop_catalog(id, name, name_hi)";
 
 type CropCycleRow = {
   id: string;
@@ -29,6 +29,9 @@ type CropCycleRow = {
   expected_harvest_date: string | null;
   actual_harvest_date: string | null;
   current_growth_stage: string | null;
+  /** The farmer's notes from the season review. */
+  notes: string | null;
+  completed_at: string | null;
   created_at: string;
   crop: { id: string; name: string; name_hi: string };
 };
@@ -96,7 +99,8 @@ export async function insertCropCycle(supabase: ServerSupabaseClient, plotId: st
 }
 
 type CropCyclePatch = {
-  status?: "ACTIVE" | "HARVESTED" | "CANCELLED";
+  status?: "ACTIVE" | "HARVESTED" | "CANCELLED" | "COMPLETED";
+  notes?: string | null;
   crop_id?: string;
   variety_name?: string | null;
   season?: string;

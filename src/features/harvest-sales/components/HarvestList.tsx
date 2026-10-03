@@ -21,6 +21,8 @@ type Props = {
   cropHref: string;
   canAddHarvest: boolean;
   canChange: boolean;
+  /** After the season is closed, a sale opens its payment page instead of its edit page. */
+  paymentOnly?: boolean;
 };
 
 function SaleItem({ t, locale, sale, href }: { t: Messages; locale: Locale; sale: Sale; href: string | null }) {
@@ -59,7 +61,7 @@ function SaleItem({ t, locale, sale, href }: { t: Messages; locale: Locale; sale
 }
 
 /** The crop's harvests, each with what was sold and what is left to sell. */
-export function HarvestList({ t, locale, harvests, cropHref, canAddHarvest, canChange }: Props) {
+export function HarvestList({ t, locale, harvests, cropHref, canAddHarvest, canChange, paymentOnly = false }: Props) {
   return (
     <section className="flex flex-col gap-3" aria-labelledby="harvests-title">
       <h2 id="harvests-title" className="text-2xl font-semibold">
@@ -91,7 +93,19 @@ export function HarvestList({ t, locale, harvests, cropHref, canAddHarvest, canC
               {h.sales.length > 0 ? (
                 <ul className="flex flex-col gap-2">
                   {h.sales.map((s) => (
-                    <SaleItem key={s.id} t={t} locale={locale} sale={s} href={canChange ? `${harvestHref}/sales/${s.id}/edit` : null} />
+                    <SaleItem
+                      key={s.id}
+                      t={t}
+                      locale={locale}
+                      sale={s}
+                      href={
+                        canChange
+                          ? `${harvestHref}/sales/${s.id}/edit`
+                          : paymentOnly
+                            ? `${harvestHref}/sales/${s.id}/payment`
+                            : null
+                      }
+                    />
                   ))}
                 </ul>
               ) : null}

@@ -3,7 +3,7 @@ import { ActivityList, ExpenseList, SpentSoFar } from "@/features/crop-records/c
 import { listActivities, listExpenses, spentSoFar } from "@/features/crop-records/repository";
 import { canRecord } from "@/features/crop-records/rules";
 import { CropStatusBadge } from "@/features/crops/components/CropStatusBadge";
-import { formatDate } from "@/features/crops/dates";
+import { formatDate, todayInIndia } from "@/features/crops/dates";
 import { cropName, isSeason, sowingSummary } from "@/features/crops/format";
 import { loadCropPage } from "@/features/crops/page-data";
 import { availableActions } from "@/features/crops/transitions";
@@ -11,6 +11,7 @@ import { CropResultCard, HarvestList } from "@/features/harvest-sales/components
 import { cropResult } from "@/features/harvest-sales/economics";
 import { listHarvestsWithSales } from "@/features/harvest-sales/repository";
 import { canAddHarvest, canChangeHarvests } from "@/features/harvest-sales/rules";
+import { format } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function CropCyclePage({ params }: PageProps<"/farms/[farmId]/plots/[plotId]/crops/[cycleId]">) {
@@ -42,6 +43,22 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
       {actions.includes("recordHarvest") ? <LinkButton href={`${cropHref}/harvest`}>{t.crops.recordHarvest}</LinkButton> : null}
       {cycle.status === "CANCELLED" ? <p className="text-lg text-stone-700">{t.crops.cancelledNote}</p> : null}
       {harvestIsNextStep ? <LinkButton href={`${cropHref}/harvests/new`}>{t.harvests.addHarvest}</LinkButton> : null}
+      {/* Once the harvest is recorded, reviewing and closing the season is the next step. */}
+      {actions.includes("review") ? (
+        <LinkButton href={`${cropHref}/review`} variant={harvestIsNextStep ? "secondary" : "primary"}>
+          {t.review.start}
+        </LinkButton>
+      ) : null}
+      {cycle.status === "COMPLETED" ? (
+        <>
+          {cycle.completed_at ? (
+            <p className="text-lg text-stone-700">
+              {format(t.review.completedOn, { date: formatDate(todayInIndia(new Date(cycle.completed_at)), locale) })}
+            </p>
+          ) : null}
+          <LinkButton href={`${cropHref}/review`}>{t.review.view}</LinkButton>
+        </>
+      ) : null}
 
       <Card>
         <dl>
@@ -69,6 +86,7 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
           cropHref={cropHref}
           canAddHarvest={harvestAllowed && !harvestIsNextStep}
           canChange={canChangeHarvests(cycle.status)}
+          paymentOnly={cycle.status === "COMPLETED"}
         />
       ) : null}
       <SpentSoFar t={t} locale={locale} {...spent} />

@@ -18,7 +18,7 @@ describe("availableActions", () => {
   it("offers the next step for each status", () => {
     expect(availableActions("PLANNED")).toEqual(["recordSowing", "edit", "cancel"]);
     expect(availableActions("ACTIVE")).toEqual(["recordHarvest", "edit", "cancel"]);
-    expect(availableActions("HARVESTED")).toEqual(["edit"]);
+    expect(availableActions("HARVESTED")).toEqual(["review", "edit"]);
   });
 
   it("treats cancelled and completed crops as final", () => {
@@ -122,6 +122,8 @@ describe("cropCycleFormValues", () => {
       expected_harvest_date: "2026-11-01",
       actual_harvest_date: null,
       current_growth_stage: null,
+      notes: null,
+      completed_at: null,
       created_at: "2026-07-01T00:00:00Z",
       crop: { id: CROP_ID, name: "Rice (paddy)", name_hi: "धान" },
     };

@@ -6,6 +6,8 @@ import { CropStatusBadge } from "@/features/crops/components/CropStatusBadge";
 import { cropName, isCropCycleStatus, isSeason, sowingSummary } from "@/features/crops/format";
 import { listCropCycles } from "@/features/crops/repository";
 import { getFarm } from "@/features/farms/repository";
+import { PastResult } from "@/features/season-review/components/PastResult";
+import { listCropTotals } from "@/features/season-review/repository";
 import { isId } from "@/features/farms/schema";
 import { formatArea, formatMeasuredArea } from "@/features/plots/format";
 import { PlotsMap } from "@/features/plots/location/PlotsMap";
@@ -32,6 +34,12 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
     listCropCycles(supabase, plotId),
   ]);
   if (!farm || !plot) notFound();
+
+  // Past seasons' results, to help plan the next crop on this plot (USER_WORKFLOWS.md section 16).
+  const totals = await listCropTotals(
+    supabase,
+    cycles.filter((c) => c.status === "COMPLETED").map((c) => c.id),
+  );
 
   const { locale, t } = await getServerMessages();
   const hasLocation = plot.boundary !== null || plot.latitude !== null;
@@ -74,6 +82,7 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
                   </span>
                   {isCropCycleStatus(cycle.status) ? <CropStatusBadge status={cycle.status} t={t} /> : null}
                   <span className="text-lg text-stone-700">{sowingSummary(cycle, t, locale)}</span>
+                  {totals.has(cycle.id) ? <PastResult t={t} locale={locale} totals={totals.get(cycle.id)!} /> : null}
                 </Link>
               </li>
             ))}
