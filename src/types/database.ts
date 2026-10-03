@@ -5,7 +5,26 @@ export type Database = {
   
   "public": {
           Tables: {
-            "crop_catalog": {
+            "crop_activities": {
+                  Row: {
+                    "activity_date": string,"activity_type": string,"cost": number | null,"created_at": string,"crop_cycle_id": string,"deleted_at": string | null,"id": string,"notes": string | null,"quantity": number | null,"quantity_unit": string | null,"updated_at": string
+                  }
+                  Insert: {
+                    "activity_date": string,"activity_type": string,"cost"?: number | null,"created_at"?: string,"crop_cycle_id": string,"deleted_at"?: string | null,"id"?: string,"notes"?: string | null,"quantity"?: number | null,"quantity_unit"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "activity_date"?: string,"activity_type"?: string,"cost"?: number | null,"created_at"?: string,"crop_cycle_id"?: string,"deleted_at"?: string | null,"id"?: string,"notes"?: string | null,"quantity"?: number | null,"quantity_unit"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "crop_activities_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
+      referencedRelation: "crop_cycles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"crop_catalog": {
                   Row: {
                     "category": string,"created_at": string,"description": string | null,"id": string,"labour_requirement": string | null,"name": string,"name_hi": string,"scientific_name": string | null,"season": string | null,"typical_duration_days": number | null,"updated_at": string,"water_requirement": string | null
                   }
@@ -40,6 +59,25 @@ isOneToOne: false
       columns: ["plot_id"]
 isOneToOne: false
       referencedRelation: "plots"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"expenses": {
+                  Row: {
+                    "amount": number,"category": string,"created_at": string,"crop_cycle_id": string,"currency": string,"deleted_at": string | null,"expense_date": string,"id": string,"notes": string | null,"quantity": number | null,"quantity_unit": string | null,"updated_at": string,"vendor": string | null
+                  }
+                  Insert: {
+                    "amount": number,"category": string,"created_at"?: string,"crop_cycle_id": string,"currency"?: string,"deleted_at"?: string | null,"expense_date": string,"id"?: string,"notes"?: string | null,"quantity"?: number | null,"quantity_unit"?: string | null,"updated_at"?: string,"vendor"?: string | null
+                  }
+                  Update: {
+                    "amount"?: number,"category"?: string,"created_at"?: string,"crop_cycle_id"?: string,"currency"?: string,"deleted_at"?: string | null,"expense_date"?: string,"id"?: string,"notes"?: string | null,"quantity"?: number | null,"quantity_unit"?: string | null,"updated_at"?: string,"vendor"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "expenses_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
+      referencedRelation: "crop_cycles"
       referencedColumns: ["id"]
     }
                   ]
@@ -105,6 +143,9 @@ isOneToOne: false
                            },
 "current_farmer_id":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"owns_crop_cycle":
+{ Args: { "p_crop_cycle_id": string }; Returns: boolean
                            },
 "owns_plot":
 { Args: { "p_plot_id": string }; Returns: boolean

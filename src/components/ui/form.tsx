@@ -90,6 +90,31 @@ export function TextField({
   );
 }
 
+type TextAreaFieldProps = Omit<FieldProps, "children"> & {
+  name: string;
+  defaultValue?: string;
+  maxLength?: number;
+};
+
+export function TextAreaField({ name, defaultValue, maxLength, ...field }: TextAreaFieldProps) {
+  return (
+    <Field {...field}>
+      {({ id, describedBy, invalid }) => (
+        <textarea
+          id={id}
+          name={name}
+          rows={3}
+          defaultValue={defaultValue}
+          maxLength={maxLength}
+          aria-describedby={describedBy}
+          aria-invalid={invalid}
+          className={`${controlClass} py-3`}
+        />
+      )}
+    </Field>
+  );
+}
+
 type DateFieldProps = Omit<FieldProps, "children"> & {
   name: string;
   defaultValue?: string;

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.4 |
+| **Version** | 0.5 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -425,6 +425,15 @@ MACHINERY
 OTHER
 ```
 
+### Implemented (v0.5)
+
+- Added `HARVEST_PREPARATION` (listed in USER_WORKFLOWS.md section 7) to the activity types.
+- `quantity_unit`: `kg`, `quintal`, `litre`, `bag`, `packet`, `hour` (machine or pump hours),
+  `day` (worker-days). A quantity and its unit are set together.
+- `cost` is optional, in rupees, greater than 0: what the farmer paid for this work.
+- `deleted_at` added for soft deletion (section 24).
+- The app records work done on or before today (in India); it does not plan future work.
+
 ## 10. `crop_observations`
 
 Stores farmer or system observations.
@@ -502,6 +511,19 @@ IRRIGATION
 TRANSPORT
 OTHER
 ```
+
+### Implemented (v0.5)
+
+- `amount` is required, in rupees, greater than 0; `currency` is always `INR` for the MVP.
+- Same quantity units as `crop_activities`; `vendor` is the shop or person paid (optional).
+- `deleted_at` added for soft deletion (section 24).
+
+### How costs are counted
+
+A crop's "spent so far" is the sum of `crop_activities.cost` and `expenses.amount`, excluding
+removed entries. Labour, machinery and irrigation can be entered either with the work done or as
+a cost, so the add-cost form tells the farmer not to enter the same money twice. Whether to keep
+two places for costs is an open product question (see docs/DEVELOPMENT_PLAN.md).
 
 ## 13. `harvests`
 
@@ -778,6 +800,15 @@ or an equivalent archival mechanism.
 
 The system must preserve agricultural history.
 
+Implemented for `crop_activities` and `expenses` (v0.5): "Remove this entry" sets `deleted_at`.
+Removed entries are hidden and not counted, but stay in the database. `DELETE` is not allowed for
+any farmer data table.
+
+Access for both tables uses `public.owns_crop_cycle(crop_cycle_id)` in select, insert and update
+policies. A trigger keeps each entry on its crop cycle and blocks changes once the cycle is
+`COMPLETED`; entries can still be added to a `CANCELLED` crop, because money spent on a lost crop
+is real.
+
 ## 25. Indexing
 
 Indexes should initially cover common access patterns such as:
@@ -858,6 +889,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003044516_slice1_farmers_farms_plots.sql` | PostGIS; `farmers`, `farms`, `plots` with location/boundary; triggers; RLS. |
 | `20261003052122_slice3_crop_catalog_and_cycles.sql` | `crop_catalog` (+ starter list), `crop_cycles`, `owns_plot()`; RLS. |
 | `20261003053318_slice4_crop_status_changes.sql` | Crop status transition trigger; harvest-date/status constraint. |
+| `20261003054621_slice5_crop_activities_and_expenses.sql` | `crop_activities`, `expenses` (soft delete), `owns_crop_cycle()`; RLS. |
 
 
 Database migrations must be version-controlled.

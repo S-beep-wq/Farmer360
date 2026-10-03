@@ -19,14 +19,18 @@ export async function sendCode(page: Page, localPhone: string) {
   await page.getByLabel("Mobile number").fill(localPhone);
   const codeLabel = page.getByLabel("Code from SMS");
   const rateLimited = page.getByText("Too many attempts. Please wait a few minutes and try again.");
+  const sendButton = page.getByRole("button", { name: "Send code" });
   for (let attempt = 0; attempt < 4; attempt++) {
-    // Wait for the Server Action's response, so an earlier error message is not mistaken for the result.
+    if (await codeLabel.isVisible()) return;
+    // Wait for the Server Action's response, then for the form to finish updating (the button reads
+    // "Sending…" until then), so an earlier error message is not mistaken for the result.
     await Promise.all([
       page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/login")),
-      page.getByRole("button", { name: "Send code" }).click(),
+      sendButton.click(),
     ]);
-    await expect(codeLabel.or(rateLimited)).toBeVisible();
+    await expect(codeLabel.or(sendButton)).toBeVisible();
     if (await codeLabel.isVisible()) return;
+    await expect(rateLimited).toBeVisible();
     await page.waitForTimeout(2000);
   }
   throw new Error("Could not request a login code");

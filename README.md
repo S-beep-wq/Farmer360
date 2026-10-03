@@ -8,7 +8,8 @@ and [`DATABASE.md`](./DATABASE.md). The build plan and progress are in
 
 **Built so far:** phone login → farmer profile → farm → plot with location
 (phone GPS, map pin and/or drawn boundary, with area calculated in the database) → edit farm
-and plot → add crops to a plot and track them (sown, harvest finished, cancelled, edited).
+and plot → add crops to a plot and track them (sown, harvest finished, cancelled, edited) →
+record work done and costs, with the total spent per crop.
 The interface is in Hindi by default, with English available.
 
 ## Stack
@@ -27,7 +28,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900007`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900008`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run
@@ -57,6 +58,7 @@ src/
 ├── components/          # shared UI (large touch targets)
 ├── features/
 │   ├── auth/            # phone OTP login
+│   ├── crop-records/    # work done (activities) and costs (expenses)
 │   ├── crops/           # crop catalog and crop cycles
 │   ├── farmer/          # profile + language
 │   ├── farms/

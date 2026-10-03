@@ -1,13 +1,21 @@
 import { Card, DetailRow, LinkButton, Page, PageTitle } from "@/components/ui/layout";
+import { ActivityList, ExpenseList, SpentSoFar } from "@/features/crop-records/components/RecordLists";
+import { listActivities, listExpenses, spentSoFar } from "@/features/crop-records/repository";
+import { canRecord } from "@/features/crop-records/rules";
 import { CropStatusBadge } from "@/features/crops/components/CropStatusBadge";
 import { formatDate } from "@/features/crops/dates";
 import { cropName, isSeason, sowingSummary } from "@/features/crops/format";
 import { loadCropPage } from "@/features/crops/page-data";
 import { availableActions } from "@/features/crops/transitions";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function CropCyclePage({ params }: PageProps<"/farms/[farmId]/plots/[plotId]/crops/[cycleId]">) {
   const { farm, plot, cycle, cropHref, locale, t } = await loadCropPage(params);
   const actions = availableActions(cycle.status);
+  const supabase = await createClient();
+  const [activities, expenses] = await Promise.all([listActivities(supabase, cycle.id), listExpenses(supabase, cycle.id)]);
+  const spent = spentSoFar(activities, expenses);
+  const recording = canRecord(cycle.status);
 
   return (
     <Page>
@@ -37,6 +45,10 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
           )}
         </dl>
       </Card>
+
+      <SpentSoFar t={t} locale={locale} {...spent} />
+      <ActivityList t={t} locale={locale} items={activities} cropHref={cropHref} canAdd={recording} />
+      <ExpenseList t={t} locale={locale} items={expenses} cropHref={cropHref} canAdd={recording} />
 
       {actions.includes("edit") ? (
         <LinkButton href={`${cropHref}/edit`} variant="secondary">

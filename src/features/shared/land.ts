@@ -41,3 +41,7 @@ export type SoilType = (typeof SOIL_TYPES)[number];
 
 export const LOCATION_SOURCES = ["device_gps", "map_pin", "boundary_centroid"] as const;
 export type LocationSource = (typeof LOCATION_SOURCES)[number];
+
+/** Units for quantities of work and inputs. "hour": machine or pump hours; "day": worker-days. */
+export const QUANTITY_UNITS = ["kg", "quintal", "litre", "bag", "packet", "hour", "day"] as const;
+export type QuantityUnit = (typeof QUANTITY_UNITS)[number];

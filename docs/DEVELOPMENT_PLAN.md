@@ -60,11 +60,23 @@ See "Open questions" below.
 Not included on purpose: undoing a status change (for example, "harvested" by mistake), and
 `COMPLETED`, which belongs to the season review.
 
+## Slice 5 — Crop activities and expenses ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `crop_activities`, `expenses` with soft delete, RLS, closed after COMPLETED | ✅ |
+| Record work done: type, date, optional quantity + unit, cost and notes | ✅ |
+| Add a cost: category, amount (₹, accepts "2,500"), date, optional quantity, shop/person, notes | ✅ |
+| Edit and remove (soft delete, with confirmation) entries made by mistake | ✅ |
+| Crop page: "spent so far" total with work/cost split, work and cost lists | ✅ |
+| Unit, integration and end-to-end tests | ✅ |
+
 ## Next slices (proposed, not started)
 
-1. **Crop activities** (USER_WORKFLOWS.md section 7) and **expenses** (section 12) for a crop.
-2. Crop observations with photos (sections 8–9) — needs Supabase Storage.
-3. Harvest quantities, sale and season economics (sections 13, 15, 16).
+1. **Harvest quantities and sales** (USER_WORKFLOWS.md sections 13 and 15) — `harvests` and
+   `sales`, then the crop's net result (revenue − costs).
+2. Season review (section 16), which sets `COMPLETED`.
+3. Crop observations with photos (sections 8–9) — needs Supabase Storage.
 4. Government scheme / insurance information (sections 10–11).
 
 ## Open questions for the product owner
@@ -79,4 +91,6 @@ Not included on purpose: undoing a status change (for example, "harvested" by mi
 - Should a farmer be able to add a crop that is not in the catalog ("other")? Today they cannot.
 - Should a farmer be able to undo a status change made by mistake (e.g. "harvest finished")?
   Today the dates can be corrected, but the status cannot go back.
+- Costs can be entered with work done or as a separate cost, which risks counting the same money
+  twice. Should costs live in one place only (e.g. work cost creates a cost entry)?
 - Hindi wording should be reviewed by a native speaker from the pilot area.
