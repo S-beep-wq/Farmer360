@@ -23,20 +23,33 @@ Register → farmer profile → create farm → create plot → capture plot loc
 | Unit, integration (RLS) and end-to-end tests | ✅ |
 | Docs: README, DATABASE.md v0.2 | ✅ |
 
+## Slice 2 — Edit farm and plot ✅ complete
+
+| Task | Status |
+|---|---|
+| Edit farm details (name, village, area, irrigation, soil); state/district stay from the profile | ✅ |
+| Edit plot details, including moving or removing the pin and redrawing or clearing the boundary | ✅ |
+| Shared forms for add and edit; saved values prefilled; map starts on the saved plot | ✅ |
+| "Remove pin" on the location picker (also available when adding) | ✅ |
+| Unit, integration and end-to-end tests for editing | ✅ |
+
+Editing overwrites the current values (with `updated_at`); earlier boundaries are not kept.
+See "Open questions" below.
+
 ## Next slices (proposed, not started)
 
-1. **Edit farm and plot details** (including re-drawing a boundary) — farmers will make mistakes
-   in the field; today a plot can only be created.
-2. **Crop cycle creation** (USER_WORKFLOWS.md section 6) — needs `crop_catalog` with a small,
+1. **Crop cycle creation** (USER_WORKFLOWS.md section 6) — needs `crop_catalog` with a small,
    verified crop list for the pilot district.
-3. Crop activities (section 7) and expenses (section 12).
-4. Crop observations with photos (section 8–9) — needs Supabase Storage.
-5. Harvest, sale and season economics (sections 13, 15, 16).
-6. Government scheme / insurance information (sections 10–11).
+2. Crop activities (section 7) and expenses (section 12).
+3. Crop observations with photos (section 8–9) — needs Supabase Storage.
+4. Harvest, sale and season economics (sections 13, 15, 16).
+5. Government scheme / insurance information (sections 10–11).
 
 ## Open questions for the product owner
 
 - Which district is the pilot district? (Profile currently takes free-text state/district.)
 - Should bigha/katha be supported, and with which conversion for that district?
 - Which map tile provider (ideally satellite imagery) and SMS provider will be used in production?
+- Once crop cycles exist, should a plot's earlier boundaries be kept (so past seasons keep the
+  area they were grown on)? Today an edit replaces the boundary.
 - Hindi wording should be reviewed by a native speaker from the pilot area.

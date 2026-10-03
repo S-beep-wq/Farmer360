@@ -34,7 +34,13 @@ export default async function NewPlotPage({ params }: PageProps<"/farms/[farmId]
       <PageTitle backHref={`/farms/${farm.id}`} backLabel={farm.name}>
         {t.plots.newTitle}
       </PageTitle>
-      <PlotForm t={t} locale={locale} action={createPlotAction.bind(null, farm.id)} initialView={initialView} />
+      <PlotForm
+        t={t}
+        locale={locale}
+        action={createPlotAction.bind(null, farm.id)}
+        initialView={initialView}
+        submitLabel={t.plots.create}
+      />
     </Page>
   );
 }

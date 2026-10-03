@@ -9,6 +9,8 @@ export const hi: Messages = {
     tagline: "आपकी खेती, एक जगह",
   },
   common: {
+    saveChanges: "बदलाव सेव करें",
+    edit: "जानकारी बदलें",
     save: "सेव करें",
     saving: "सेव हो रहा है…",
     back: "वापस",
@@ -47,6 +49,7 @@ export const hi: Messages = {
     submit: "आगे बढ़ें",
   },
   farms: {
+    editTitle: "खेत की जानकारी बदलें",
     title: "मेरे खेत",
     greeting: "नमस्ते, {name}",
     empty: "आपने अभी तक कोई खेत नहीं जोड़ा है।",
@@ -70,6 +73,8 @@ export const hi: Messages = {
     allFarms: "सभी खेत",
   },
   plots: {
+    editTitle: "प्लॉट की जानकारी बदलें",
+    removePin: "पिन हटाएँ",
     newTitle: "प्लॉट जोड़ें",
     nameLabel: "प्लॉट का नाम",
     nameHint: "जैसे “प्लॉट 1” या “नहर के पास वाला”",

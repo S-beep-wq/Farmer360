@@ -7,6 +7,8 @@ export const en = {
     tagline: "Your farm, in one place",
   },
   common: {
+    saveChanges: "Save changes",
+    edit: "Change details",
     save: "Save",
     saving: "Saving…",
     back: "Back",
@@ -45,6 +47,7 @@ export const en = {
     submit: "Continue",
   },
   farms: {
+    editTitle: "Change farm details",
     title: "My farms",
     greeting: "Namaste, {name}",
     empty: "You have not added a farm yet.",
@@ -68,6 +71,8 @@ export const en = {
     allFarms: "All farms",
   },
   plots: {
+    editTitle: "Change plot details",
+    removePin: "Remove pin",
     newTitle: "Add a plot",
     nameLabel: "Plot name",
     nameHint: "e.g. “Plot 1” or “Near the canal”",

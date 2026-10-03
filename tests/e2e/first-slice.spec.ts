@@ -1,47 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { TEST_OTP, TEST_PHONES } from "../support/supabase";
+import { TEST_PHONES } from "../support/supabase";
+
+import { logIn as logInAs, sendCode, switchToEnglish, tapMap } from "./helpers";
 
 // The first vertical slice: register → profile → farm → plot with location and boundary → view.
 // Tests run in order and share one farmer (the e2e test phone), created fresh by global-setup.
 
 test.describe.configure({ mode: "serial" });
 
-const LOCAL_PHONE = TEST_PHONES.e2e.replace("+91", "");
-
-async function switchToEnglish(page: Page) {
-  const englishButton = page.getByRole("button", { name: /English/ });
-  if (await englishButton.isVisible()) {
-    await englishButton.click();
-    await expect(page.getByRole("button", { name: /हिंदी/ })).toBeVisible();
-  }
-}
-
-/** Requests a code, waiting out the auth server's per-phone resend limit (5 s locally). */
-async function sendCode(page: Page, localPhone: string) {
-  await page.getByLabel("Mobile number").fill(localPhone);
-  const codeLabel = page.getByLabel("Code from SMS");
-  const rateLimited = page.getByText("Too many attempts. Please wait a few minutes and try again.");
-  for (let attempt = 0; attempt < 4; attempt++) {
-    // Wait for the Server Action's response, so an earlier error message is not mistaken for the result.
-    await Promise.all([
-      page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/login")),
-      page.getByRole("button", { name: "Send code" }).click(),
-    ]);
-    await expect(codeLabel.or(rateLimited)).toBeVisible();
-    if (await codeLabel.isVisible()) return;
-    await page.waitForTimeout(2000);
-  }
-  throw new Error("Could not request a login code");
-}
-
 async function logIn(page: Page) {
-  await page.goto("/login");
-  await switchToEnglish(page);
-  await sendCode(page, LOCAL_PHONE);
-  await expect(page.getByText("We sent a 6-digit code to +91 99999 00004")).toBeVisible();
-  await page.getByLabel("Code from SMS").fill(TEST_OTP);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await logInAs(page, TEST_PHONES.e2e);
 }
 
 test("a signed-out visitor is sent to the login page, in Hindi by default", async ({ page }) => {
@@ -111,24 +80,19 @@ test("a new farmer registers, creates a farm and a plot with location and bounda
   // 6. Draw the boundary by tapping four corners around the centre of the map.
   await page.getByRole("button", { name: "Mark the field boundary" }).click();
   const map = page.getByTestId("plot-location-map");
-  const box = (await map.boundingBox())!;
-  const cx = box.width / 2;
-  const cy = box.height / 2;
-  for (const [dx, dy] of [
+  await tapMap(map, [
     [-60, -60],
     [60, -60],
     [60, 60],
     [-60, 60],
-  ]) {
-    await map.click({ position: { x: cx + dx, y: cy + dy } });
-  }
+  ]);
   await expect(page.getByTestId("boundary-points")).toHaveText("Corners marked: 4");
   await expect(page.getByTestId("boundary-area")).toContainText("Area from map: about");
 
   // Undo and redo the last corner.
   await page.getByRole("button", { name: "Undo last corner" }).click();
   await expect(page.getByTestId("boundary-points")).toHaveText("Corners marked: 3");
-  await map.click({ position: { x: cx - 60, y: cy + 60 } });
+  await tapMap(map, [[-60, 60]]);
   await page.getByRole("button", { name: "Done" }).click();
 
   // Use the measured area as the plot area.

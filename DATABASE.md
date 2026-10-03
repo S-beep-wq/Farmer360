@@ -194,6 +194,12 @@ Rules enforced in the database:
 `area` (what the farmer says) and `boundary_area_sq_m` (what the map measures) are kept
 separately and both shown, because they can legitimately differ. Neither overwrites the other.
 
+When a plot is edited, the app sends the full location again. If there is no pin, it sends
+`latitude`/`longitude` as null, so the database recalculates the centre from the (possibly
+redrawn) boundary. An edit replaces the current boundary; earlier boundaries are not kept yet.
+If past seasons need the boundary they were grown on, add a boundary history table before
+crop cycles start relying on plot area.
+
 The API writes `boundary` as EWKT (`SRID=4326;POLYGON((lng lat, ...))`) and reads it as GeoJSON
 through the computed field `boundary_geojson` (`select=boundary_geojson`).
 

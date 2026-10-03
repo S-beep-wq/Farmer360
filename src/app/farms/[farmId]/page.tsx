@@ -32,6 +32,9 @@ export default async function FarmPage({ params }: PageProps<"/farms/[farmId]">)
       <p className="text-lg text-stone-700">
         {[farm.village, farm.district, formatArea(farm.total_area, farm.area_unit, t, locale)].filter(Boolean).join(" · ")}
       </p>
+      <LinkButton href={`/farms/${farm.id}/edit`} variant="secondary">
+        {t.common.edit}
+      </LinkButton>
 
       {mappedPlots.length > 0 ? (
         <section className="flex flex-col gap-3">

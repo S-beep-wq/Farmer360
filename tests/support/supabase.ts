@@ -13,6 +13,7 @@ export const TEST_PHONES = {
   integrationNoProfile: "+919999900003",
   e2e: "+919999900004",
   e2eWrongCode: "+919999900005",
+  e2eEdit: "+919999900006",
 } as const;
 
 function env(name: string): string {

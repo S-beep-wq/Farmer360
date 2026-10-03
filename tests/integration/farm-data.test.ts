@@ -216,6 +216,65 @@ describe("plots", () => {
   });
 });
 
+describe("editing", () => {
+  const NEW_SQUARE: LngLat[] = [
+    [85.01, 25.51],
+    [85.012, 25.51],
+    [85.012, 25.512],
+    [85.01, 25.512],
+  ];
+
+  it("lets a farmer change their farm's details", async () => {
+    const { data: before } = await a.from("farms").select("updated_at").eq("id", aFarmId).single();
+    const { data, error } = await a
+      .from("farms")
+      .update({ name: "Near the house", irrigation_available: true, irrigation_type: "canal", total_area: 2, area_unit: "acre" })
+      .eq("id", aFarmId)
+      .select("name, irrigation_type, total_area, farmer_id, updated_at")
+      .single();
+    expect(error).toBeNull();
+    expect(data).toMatchObject({ name: "Near the house", irrigation_type: "canal", total_area: 2, farmer_id: aFarmerId });
+    expect(new Date(data!.updated_at).getTime()).toBeGreaterThan(new Date(before!.updated_at).getTime());
+  });
+
+  it("recalculates area and centre when a boundary is redrawn", async () => {
+    const { data, error } = await a
+      .from("plots")
+      .update({ boundary: toEwktPolygon(NEW_SQUARE), latitude: null, longitude: null, location_source: null, boundary_area_sq_m: 1 })
+      .eq("id", aPlotId)
+      .select("latitude, longitude, location_source, boundary_area_sq_m")
+      .single();
+    expect(error).toBeNull();
+    expect(data!.location_source).toBe("boundary_centroid");
+    expect(data!.latitude).toBeCloseTo(25.511, 4);
+    expect(data!.longitude).toBeCloseTo(85.011, 4);
+    expect(Math.abs(data!.boundary_area_sq_m! - ringAreaSqM(NEW_SQUARE)) / ringAreaSqM(NEW_SQUARE)).toBeLessThan(0.01);
+  });
+
+  it("can replace the boundary with a pin and an area", async () => {
+    const { data, error } = await a
+      .from("plots")
+      .update({ boundary: null, area: 0.5, area_unit: "acre", latitude: 25.6, longitude: 85.1, location_source: "map_pin", location_accuracy_m: null })
+      .eq("id", aPlotId)
+      .select("latitude, location_source, boundary_area_sq_m, boundary_geojson")
+      .single();
+    expect(error).toBeNull();
+    expect(data).toEqual({ latitude: 25.6, location_source: "map_pin", boundary_area_sq_m: null, boundary_geojson: null });
+  });
+
+  it("cannot remove both the area and the boundary", async () => {
+    const { error } = await a.from("plots").update({ area: null, area_unit: null, boundary: null }).eq("id", aPlotId);
+    expect(error?.code).toBe("23514");
+  });
+
+  it("does not let another farmer change a plot", async () => {
+    const { data } = await b.from("plots").update({ name: "Hijacked" }).eq("id", aPlotId).select("id");
+    expect(data).toEqual([]);
+    const { data: plot } = await a.from("plots").select("name").eq("id", aPlotId).single();
+    expect(plot!.name).toBe("Plot 1");
+  });
+});
+
 describe("signed-out visitors", () => {
   it("cannot read or write any farm data", async () => {
     const anon = anonClient();

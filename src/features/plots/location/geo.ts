@@ -6,6 +6,14 @@ import turfArea from "@turf/area";
 
 export type LngLat = [number, number];
 
+/** A plot location set by the farmer: from the phone, or a pin tapped on the map. */
+export type PlotPoint = {
+  lat: number;
+  lng: number;
+  source: "device_gps" | "map_pin";
+  accuracyM?: number;
+};
+
 export const MAX_BOUNDARY_POINTS = 500;
 export const MIN_BOUNDARY_POINTS = 3;
 

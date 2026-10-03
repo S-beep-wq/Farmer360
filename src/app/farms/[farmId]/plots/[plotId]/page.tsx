@@ -82,6 +82,7 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
         </dl>
       </Card>
 
+      <LinkButton href={`/farms/${farm.id}/plots/${plot.id}/edit`}>{t.common.edit}</LinkButton>
       <LinkButton href={`/farms/${farm.id}`} variant="secondary">
         {farm.name}
       </LinkButton>

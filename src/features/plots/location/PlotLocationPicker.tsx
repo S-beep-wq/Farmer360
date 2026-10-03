@@ -7,15 +7,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { format, type Messages } from "@/lib/i18n";
 
-import { checkBoundary, ringAreaSqM, type LngLat } from "./geo";
+import { checkBoundary, ringAreaSqM, type LngLat, type PlotPoint } from "./geo";
 import { addBaseLayer, BOUNDARY_STYLE, FIELD_ZOOM, loadLeaflet, pinIcon, type L } from "./leaflet";
 
-type Point = {
-  lat: number;
-  lng: number;
-  source: "device_gps" | "map_pin";
-  accuracyM?: number;
-};
+type Point = PlotPoint;
 
 type Status =
   | { kind: "idle" }
@@ -28,6 +23,9 @@ type Status =
 type Props = {
   t: Messages;
   initialView: { lat: number; lng: number; zoom: number };
+  /** Saved location when editing a plot. The map starts zoomed to it. */
+  initialPoint?: PlotPoint | null;
+  initialBoundary?: LngLat[];
   /** Called with the boundary's area in m², or null when there is no usable boundary. */
   onBoundaryAreaChange?: (sqM: number | null) => void;
   locationError?: string;
@@ -45,9 +43,17 @@ const secondaryButton =
  * 3. a boundary drawn by tapping the field's corners.
  * Writes the result into hidden form inputs for the plot Server Action.
  */
-export function PlotLocationPicker({ t, initialView, onBoundaryAreaChange, locationError, boundaryError }: Props) {
-  const [point, setPoint] = useState<Point | null>(null);
-  const [boundary, setBoundary] = useState<LngLat[]>([]);
+export function PlotLocationPicker({
+  t,
+  initialView,
+  initialPoint = null,
+  initialBoundary = [],
+  onBoundaryAreaChange,
+  locationError,
+  boundaryError,
+}: Props) {
+  const [point, setPoint] = useState<Point | null>(initialPoint);
+  const [boundary, setBoundary] = useState<LngLat[]>(initialBoundary);
   const [drawing, setDrawing] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [mapReady, setMapReady] = useState(false);
@@ -55,6 +61,7 @@ export function PlotLocationPicker({ t, initialView, onBoundaryAreaChange, locat
   const containerRef = useRef<HTMLDivElement>(null);
   const leafletRef = useRef<{ L: L; map: Leaflet.Map; layers: Leaflet.LayerGroup } | null>(null);
   const drawingRef = useRef(drawing);
+  const initialLocationRef = useRef({ point: initialPoint, boundary: initialBoundary });
 
   useEffect(() => {
     drawingRef.current = drawing;
@@ -65,10 +72,19 @@ export function PlotLocationPicker({ t, initialView, onBoundaryAreaChange, locat
     let cancelled = false;
     loadLeaflet().then((L) => {
       if (cancelled || !containerRef.current) return;
-      const map = L.map(containerRef.current, { scrollWheelZoom: false }).setView(
-        [initialView.lat, initialView.lng],
-        initialView.zoom,
-      );
+      const map = L.map(containerRef.current, { scrollWheelZoom: false });
+      // Start on the saved boundary or pin when editing, otherwise on the given view.
+      const start = initialLocationRef.current;
+      if (start.boundary.length >= 3) {
+        map.fitBounds(L.latLngBounds(start.boundary.map(([lng, lat]) => L.latLng(lat, lng))), {
+          padding: [32, 32],
+          maxZoom: FIELD_ZOOM,
+        });
+      } else if (start.point) {
+        map.setView([start.point.lat, start.point.lng], FIELD_ZOOM);
+      } else {
+        map.setView([initialView.lat, initialView.lng], initialView.zoom);
+      }
       addBaseLayer(L, map);
       const layers = L.layerGroup().addTo(map);
       map.on("click", (e: Leaflet.LeafletMouseEvent) => {
@@ -179,6 +195,19 @@ export function PlotLocationPicker({ t, initialView, onBoundaryAreaChange, locat
       <p aria-live="polite" className="min-h-6 text-base text-stone-700" data-testid="location-status">
         {statusText}
       </p>
+
+      {point && !drawing ? (
+        <button
+          type="button"
+          onClick={() => {
+            setPoint(null);
+            setStatus({ kind: "idle" });
+          }}
+          className="min-h-12 w-fit self-start rounded-lg px-1 text-lg font-medium text-red-700 underline underline-offset-4"
+        >
+          {t.plots.removePin}
+        </button>
+      ) : null}
 
       <div
         ref={containerRef}

@@ -9,6 +9,7 @@ import { initialFormState, type FormState } from "@/lib/forms";
 import { format, type Locale, type Messages } from "@/lib/i18n";
 
 import { formatMeasuredArea } from "../format";
+import type { LngLat, PlotPoint } from "../location/geo";
 import { PlotLocationPicker } from "../location/PlotLocationPicker";
 
 type Props = {
@@ -16,11 +17,16 @@ type Props = {
   locale: Locale;
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   initialView: { lat: number; lng: number; zoom: number };
+  /** The saved plot when editing; empty when adding a plot. */
+  initialValues?: Record<string, string>;
+  initialLocation?: { point: PlotPoint | null; boundary: LngLat[] };
+  submitLabel: string;
 };
 
-export function PlotForm({ t, locale, action, initialView }: Props) {
+/** Used to add a plot and to change a plot's details, location and boundary. */
+export function PlotForm({ t, locale, action, initialView, initialValues = {}, initialLocation, submitLabel }: Props) {
   const [state, formAction] = useActionState(action, initialFormState);
-  const v = state.values ?? {};
+  const v = state.values ?? initialValues;
   const err = (field: string) => {
     const key = state.fieldErrors?.[field];
     return key ? t.errors[key] : undefined;
@@ -38,6 +44,8 @@ export function PlotForm({ t, locale, action, initialView }: Props) {
       <PlotLocationPicker
         t={t}
         initialView={initialView}
+        initialPoint={initialLocation?.point}
+        initialBoundary={initialLocation?.boundary}
         onBoundaryAreaChange={onBoundaryAreaChange}
         locationError={err("location") ?? err("latitude") ?? err("longitude")}
         boundaryError={err("boundary")}
@@ -73,7 +81,7 @@ export function PlotForm({ t, locale, action, initialView }: Props) {
       <IrrigationSoilFields t={t} values={v} errors={state.fieldErrors} />
 
       <FormError message={state.formError && t.errors[state.formError]} />
-      <SubmitButton label={t.plots.create} pendingLabel={t.common.saving} />
+      <SubmitButton label={submitLabel} pendingLabel={t.common.saving} />
     </form>
   );
 }
