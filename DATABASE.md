@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.5 |
+| **Version** | 0.6 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -551,6 +551,17 @@ crop_cycle 1 → many harvests
 
 This allows multiple harvest events where appropriate.
 
+### Implemented (v0.6)
+
+- `quantity` (> 0) and `quantity_unit` (`kg`, `quintal`, `tonne`) are required. These three units
+  convert exactly (`public.produce_unit_kg()`), so sales can be checked against the harvest.
+  Count-based units (pieces, crates) are not supported yet.
+- `quality_grade`: optional, `GOOD`, `AVERAGE` or `POOR` (farmer's own judgement).
+- `deleted_at` for soft deletion (section 24).
+- Trigger rules: a new harvest needs a crop that is `ACTIVE` or `HARVESTED`; the harvest date is
+  on or after the actual sowing date; the quantity cannot drop below what was sold from it; a
+  harvest with sales cannot be removed; nothing changes once the crop is `COMPLETED`.
+
 ## 14. `buyers`
 
 Stores buyer information.
@@ -570,6 +581,12 @@ updated_at
 ```
 
 Buyer information requires appropriate access controls.
+
+**Not created yet (v0.6).** This table describes buyers for buyer discovery (a marketplace
+feature with verification). Recording the farmer's own sale does not need it, and creating
+marketplace buyer records from farmers' private sales would mix two different things. Sales
+store the buyer as the farmer describes it (`sales.buyer_type` and `sales.buyer_name`); a
+nullable `sales.buyer_id` can be added when buyer discovery is built.
 
 ## 15. `buyer_demands`
 
@@ -633,6 +650,37 @@ PENDING
 PARTIAL
 PAID
 ```
+
+### Implemented (v0.6)
+
+Differences from the field list above:
+
+- `buyer_type` (required: `LOCAL_TRADER`, `MANDI`, `GOVERNMENT_PROCUREMENT`, `FPO`, `COMPANY`,
+  `CONSUMER`, `OTHER`) and `buyer_name` (optional) instead of `buyer_id` — see section 14.
+- `quantity_unit`: `kg`, `quintal` or `tonne`; `price_per_unit` is rupees per one of that unit.
+- `transport_cost` and `other_cost` default to 0.
+- `gross_amount` (`quantity × price_per_unit`) and `net_amount` (`gross − transport − other`) are
+  **generated columns**: the database calculates them and the app cannot write them.
+- `deleted_at` for soft deletion (section 24).
+
+Trigger rules: a sale stays on its harvest; it is on or after the harvest date; the total sold
+from a harvest (in kg, removed sales excluded) cannot exceed the harvest, with the harvest row
+locked so two sales saved at once cannot oversell it; the harvest must not be removed; nothing
+changes once the crop is `COMPLETED`. Access uses `public.owns_harvest(harvest_id)`.
+
+### Crop result
+
+The crop page shows, from recorded data only:
+
+```text
+  money from sales (sum of gross_amount)
+− spent on the crop (activity costs + expenses, section 12)
+− selling costs (sum of transport_cost + other_cost)
+= net result (profit or loss)
+```
+
+It also says when some sales are not fully paid (`payment_status` other than `PAID`): the money
+is recorded, not necessarily received. It is not a forecast.
 
 ## 17. `government_schemes`
 
@@ -890,6 +938,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003052122_slice3_crop_catalog_and_cycles.sql` | `crop_catalog` (+ starter list), `crop_cycles`, `owns_plot()`; RLS. |
 | `20261003053318_slice4_crop_status_changes.sql` | Crop status transition trigger; harvest-date/status constraint. |
 | `20261003054621_slice5_crop_activities_and_expenses.sql` | `crop_activities`, `expenses` (soft delete), `owns_crop_cycle()`; RLS. |
+| `20261003062409_slice6_harvests_and_sales.sql` | `harvests`, `sales` (generated amounts, oversell check), `owns_harvest()`; RLS. |
 
 
 Database migrations must be version-controlled.

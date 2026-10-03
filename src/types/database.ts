@@ -113,6 +113,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"harvests": {
+                  Row: {
+                    "created_at": string,"crop_cycle_id": string,"deleted_at": string | null,"harvest_date": string,"id": string,"notes": string | null,"quality_grade": string | null,"quantity": number,"quantity_unit": string,"updated_at": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"crop_cycle_id": string,"deleted_at"?: string | null,"harvest_date": string,"id"?: string,"notes"?: string | null,"quality_grade"?: string | null,"quantity": number,"quantity_unit": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"crop_cycle_id"?: string,"deleted_at"?: string | null,"harvest_date"?: string,"id"?: string,"notes"?: string | null,"quality_grade"?: string | null,"quantity"?: number,"quantity_unit"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "harvests_crop_cycle_id_fkey"
+      columns: ["crop_cycle_id"]
+isOneToOne: false
+      referencedRelation: "crop_cycles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"plots": {
                   Row: {
                     "area": number | null,"area_unit": string | null,"boundary": unknown,"boundary_area_sq_m": number | null,"created_at": string,"farm_id": string,"id": string,"irrigation_available": boolean | null,"irrigation_type": string | null,"latitude": number | null,"location_accuracy_m": number | null,"location_source": string | null,"longitude": number | null,"name": string,"notes": string | null,"soil_ph": number | null,"soil_source": string | null,"soil_type": string | null,"updated_at": string,"boundary_geojson": Json | null
@@ -132,6 +151,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"sales": {
+                  Row: {
+                    "buyer_name": string | null,"buyer_type": string,"created_at": string,"deleted_at": string | null,"gross_amount": number | null,"harvest_id": string,"id": string,"net_amount": number | null,"notes": string | null,"other_cost": number,"payment_status": string,"price_per_unit": number,"quantity": number,"quantity_unit": string,"sale_date": string,"transport_cost": number,"updated_at": string
+                  }
+                  Insert: {
+                    "buyer_name"?: string | null,"buyer_type": string,"created_at"?: string,"deleted_at"?: string | null,"gross_amount"?: never,"harvest_id": string,"id"?: string,"net_amount"?: never,"notes"?: string | null,"other_cost"?: number,"payment_status": string,"price_per_unit": number,"quantity": number,"quantity_unit": string,"sale_date": string,"transport_cost"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "buyer_name"?: string | null,"buyer_type"?: string,"created_at"?: string,"deleted_at"?: string | null,"gross_amount"?: never,"harvest_id"?: string,"id"?: string,"net_amount"?: never,"notes"?: string | null,"other_cost"?: number,"payment_status"?: string,"price_per_unit"?: number,"quantity"?: number,"quantity_unit"?: string,"sale_date"?: string,"transport_cost"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "sales_harvest_id_fkey"
+      columns: ["harvest_id"]
+isOneToOne: false
+      referencedRelation: "harvests"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -144,11 +182,20 @@ isOneToOne: false
 "current_farmer_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"harvest_sold_kg":
+{ Args: { "p_except_sale_id"?: string,"p_harvest_id": string }; Returns: number
+                           },
 "owns_crop_cycle":
 { Args: { "p_crop_cycle_id": string }; Returns: boolean
                            },
+"owns_harvest":
+{ Args: { "p_harvest_id": string }; Returns: boolean
+                           },
 "owns_plot":
 { Args: { "p_plot_id": string }; Returns: boolean
+                           },
+"produce_unit_kg":
+{ Args: { "p_unit": string }; Returns: number
                            }
           }
           Enums: {

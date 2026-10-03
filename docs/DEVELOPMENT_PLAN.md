@@ -71,13 +71,25 @@ Not included on purpose: undoing a status change (for example, "harvested" by mi
 | Crop page: "spent so far" total with work/cost split, work and cost lists | ✅ |
 | Unit, integration and end-to-end tests | ✅ |
 
+## Slice 6 — Harvest quantities and sales ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `harvests`, `sales` (generated gross/net, oversell check with row lock), soft delete, RLS | ✅ |
+| Record harvests (one or more per crop): date, quantity in kg/quintal/tonne, quality, notes | ✅ |
+| Record sales per harvest: who bought, quantity, price per unit, date, transport/other costs, payment | ✅ |
+| "Sold / not sold yet" per harvest; no selling more than was harvested | ✅ |
+| Crop result: money from sales − spent on the crop − selling costs = net (profit/loss), unpaid note | ✅ |
+| Edit and remove harvests and sales (a harvest with sales cannot be removed) | ✅ |
+| Unit, integration and end-to-end tests | ✅ |
+
 ## Next slices (proposed, not started)
 
-1. **Harvest quantities and sales** (USER_WORKFLOWS.md sections 13 and 15) — `harvests` and
-   `sales`, then the crop's net result (revenue − costs).
-2. Season review (section 16), which sets `COMPLETED`.
-3. Crop observations with photos (sections 8–9) — needs Supabase Storage.
-4. Government scheme / insurance information (sections 10–11).
+1. **Season review** (USER_WORKFLOWS.md section 16): a summary of the crop (costs, harvest,
+   revenue, net result, activities, notes) that the farmer saves, which sets `COMPLETED`.
+2. Crop observations with photos (sections 8–9) — needs Supabase Storage.
+3. Government scheme / insurance information (sections 10–11).
+4. Buyer discovery (section 14) — the marketplace `buyers` table.
 
 ## Open questions for the product owner
 
@@ -93,4 +105,7 @@ Not included on purpose: undoing a status change (for example, "harvested" by mi
   Today the dates can be corrected, but the status cannot go back.
 - Costs can be entered with work done or as a separate cost, which risks counting the same money
   twice. Should costs live in one place only (e.g. work cost creates a cost entry)?
+- Should vegetables be recorded in pieces or crates as well as kg/quintal? Today only weight units
+  are supported, so sales can be checked against the harvest.
+- Should a sale record how much money has been received so far (for "partly paid")?
 - Hindi wording should be reviewed by a native speaker from the pilot area.

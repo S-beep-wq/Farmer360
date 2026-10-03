@@ -7,15 +7,28 @@ import { formatDate } from "@/features/crops/dates";
 import { cropName, isSeason, sowingSummary } from "@/features/crops/format";
 import { loadCropPage } from "@/features/crops/page-data";
 import { availableActions } from "@/features/crops/transitions";
+import { CropResultCard, HarvestList } from "@/features/harvest-sales/components/HarvestList";
+import { cropResult } from "@/features/harvest-sales/economics";
+import { listHarvestsWithSales } from "@/features/harvest-sales/repository";
+import { canAddHarvest, canChangeHarvests } from "@/features/harvest-sales/rules";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function CropCyclePage({ params }: PageProps<"/farms/[farmId]/plots/[plotId]/crops/[cycleId]">) {
   const { farm, plot, cycle, cropHref, locale, t } = await loadCropPage(params);
   const actions = availableActions(cycle.status);
   const supabase = await createClient();
-  const [activities, expenses] = await Promise.all([listActivities(supabase, cycle.id), listExpenses(supabase, cycle.id)]);
+  const [activities, expenses, harvests] = await Promise.all([
+    listActivities(supabase, cycle.id),
+    listExpenses(supabase, cycle.id),
+    listHarvestsWithSales(supabase, cycle.id),
+  ]);
   const spent = spentSoFar(activities, expenses);
   const recording = canRecord(cycle.status);
+  const sales = harvests.flatMap((h) => h.sales);
+  const result = cropResult(spent.total, sales);
+  const harvestAllowed = canAddHarvest(cycle.status);
+  // A crop whose harvest is finished but whose quantity is not recorded yet: that is the next step.
+  const harvestIsNextStep = cycle.status === "HARVESTED" && harvests.length === 0;
 
   return (
     <Page>
@@ -28,6 +41,7 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
       {actions.includes("recordSowing") ? <LinkButton href={`${cropHref}/sowing`}>{t.crops.recordSowing}</LinkButton> : null}
       {actions.includes("recordHarvest") ? <LinkButton href={`${cropHref}/harvest`}>{t.crops.recordHarvest}</LinkButton> : null}
       {cycle.status === "CANCELLED" ? <p className="text-lg text-stone-700">{t.crops.cancelledNote}</p> : null}
+      {harvestIsNextStep ? <LinkButton href={`${cropHref}/harvests/new`}>{t.harvests.addHarvest}</LinkButton> : null}
 
       <Card>
         <dl>
@@ -46,6 +60,17 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
         </dl>
       </Card>
 
+      {sales.length > 0 ? <CropResultCard t={t} locale={locale} {...result} /> : null}
+      {harvestAllowed || harvests.length > 0 ? (
+        <HarvestList
+          t={t}
+          locale={locale}
+          harvests={harvests}
+          cropHref={cropHref}
+          canAddHarvest={harvestAllowed && !harvestIsNextStep}
+          canChange={canChangeHarvests(cycle.status)}
+        />
+      ) : null}
       <SpentSoFar t={t} locale={locale} {...spent} />
       <ActivityList t={t} locale={locale} items={activities} cropHref={cropHref} canAdd={recording} />
       <ExpenseList t={t} locale={locale} items={expenses} cropHref={cropHref} canAdd={recording} />
