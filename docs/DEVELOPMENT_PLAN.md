@@ -196,13 +196,31 @@ No migration: planning reads existing data. Not shown, because there is no verif
 duration, water, labour and input needs, cost/revenue/margin estimates, production risks and
 whether a crop suits the season (USER_WORKFLOWS.md section 5 lists these as "potentially").
 
+## Slice 15 — AI crop-health assistance ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `crop_health_analyses` (separate from the observation), limits, feedback-only updates, RLS | ✅ |
+| "Ask AI to look at the photo" on an observation with a photo, with what is sent explained first | ✅ |
+| AI service (server only, `claude-opus-5-5`, structured output, refusal fallback); off without `ANTHROPIC_API_KEY` | ✅ |
+| Only needed facts sent: photo, crop, season, days since sowing, district/state, farmer's status and note | ✅ |
+| Answer shows confidence first, possible causes with likelihood, safe next steps, what would help, expert box | ✅ |
+| Cautious rules: unusable photo → no causes; unsure → more information or expert; farmer's "serious" → expert | ✅ |
+| Never names chemicals or doses; "AI suggestion, not a diagnosis" on every answer | ✅ |
+| "Did this help?" feedback for field validation; 3 per photo, 20 per day | ✅ |
+| Unit, integration (service against a local stand-in API, DB rules) and end-to-end tests | ✅ |
+
+Not built: the natural-language assistant ("What should I do today?", USER_WORKFLOWS.md section 17).
+The answers have not been checked by agronomists; field validation should review the stored
+answers and the farmers' feedback before wider use.
+
 ## Next slices (proposed, not started)
 
 1. Verified crop reference data for planning (duration, water and labour needs, typical cost and
    price ranges for the pilot district, which seasons each crop suits), loaded with a source and
    check date like schemes — needs a source agreed with agronomists.
-2. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
-   a confidence/uncertainty design and field validation.
+2. AI assistant for questions about the farm (USER_WORKFLOWS.md section 17), using the farm's own
+   records as context.
 
 ## Open questions for the product owner
 
@@ -241,4 +259,6 @@ whether a crop suits the season (USER_WORKFLOWS.md section 5 lists these as "pot
   7 days to change one's mind), or an export of the farmer's records before deleting?
 - Changing the mobile number (e.g. a new SIM) needs a verified OTP to the new number. Not built;
   today a farmer with a new number would start a new account.
+- AI crop-health help: who reviews the stored AI answers and feedback during field validation, and
+  what accuracy is needed before it is offered widely? How long should AI answers be kept?
 - Hindi wording should be reviewed by a native speaker from the pilot area.

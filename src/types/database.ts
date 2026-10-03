@@ -106,6 +106,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"crop_health_analyses": {
+                  Row: {
+                    "confidence": string,"created_at": string,"farmer_feedback": string | null,"id": string,"image_usable": boolean,"locale": string,"model": string,"observation_id": string,"result": NonNullable<Json>,"see_expert": boolean
+                  }
+                  Insert: {
+                    "confidence": string,"created_at"?: string,"farmer_feedback"?: string | null,"id"?: string,"image_usable": boolean,"locale": string,"model": string,"observation_id": string,"result": NonNullable<Json>,"see_expert": boolean
+                  }
+                  Update: {
+                    "confidence"?: string,"created_at"?: string,"farmer_feedback"?: string | null,"id"?: string,"image_usable"?: boolean,"locale"?: string,"model"?: string,"observation_id"?: string,"result"?: NonNullable<Json>,"see_expert"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "crop_health_analyses_observation_id_fkey"
+      columns: ["observation_id"]
+isOneToOne: false
+      referencedRelation: "crop_observations"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"crop_observations": {
                   Row: {
                     "ai_analysis": Json | null,"ai_confidence": number | null,"created_at": string,"created_by": string,"crop_cycle_id": string,"deleted_at": string | null,"farmer_notes": string | null,"growth_stage": string | null,"health_status": string,"id": string,"observation_date": string,"updated_at": string

@@ -20,6 +20,7 @@
     "insurance:import": "node --env-file=.env.local scripts/import-official-data.mjs insurance"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "@turf/area": "^7.4.0",

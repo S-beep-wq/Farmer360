@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.13 |
+| **Version** | 0.15 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -525,6 +525,39 @@ updated_at
 - New observations only for an `ACTIVE` crop, dated on or after its sowing date; nothing changes
   once the crop is `COMPLETED`. Access uses `public.owns_crop_cycle()`.
 - An observation needs a photo or a note (checked by the app).
+- The `ai_analysis` and `ai_confidence` columns stay unused: AI answers are stored in
+  `crop_health_analyses` (section 10a), so there can be several, each with its model and the
+  farmer's feedback, and the observation row is never written by the AI path.
+
+## 10a. `crop_health_analyses` (v0.15)
+
+AI suggestions about an observation's photo (PRODUCT_SPEC.md section 16), kept apart from the
+farmer's own observation.
+
+```text
+id
+observation_id
+locale
+model
+result            (jsonb: image_usable, summary, possible_causes[], confidence, next_steps[],
+                   see_expert, expert_reason, more_information_needed[])
+confidence        (LOW / MEDIUM / HIGH)
+image_usable
+see_expert
+farmer_feedback   (HELPFUL / NOT_HELPFUL / NOT_SURE, set by the farmer afterwards)
+created_at
+```
+
+- Made only when the farmer asks, for an observation with a photo. The application checks the
+  model's answer against a schema and makes it more cautious where needed (rules.ts) before saving.
+- Limits (trigger): ownership is checked first; at most 3 analyses per observation and 20 per
+  farmer per day (India time).
+- RLS on own observations. Farmers may insert the analysis columns and later update only
+  `farmer_feedback`; no deletes (removed with the observation or the account).
+- Saved with the farmer's own session, like everything else in the app (no secret key in app
+  code). This means a technically skilled farmer could store a made-up "AI" answer on their own
+  observation; it is visible only to them and never changes their observation.
+- No raw conversation is stored, only the structured result and the model name (section 20).
 
 ## 11. `crop_photos`
 
@@ -1120,6 +1153,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003090045_slice11_buyer_discovery.sql` | `buyers`, `buyer_demands`, `demand_interests`; one role per login; `demand_interested_farmers()`; RLS. |
 | `20261003092520_slice12_government_schemes.sql` | `government_schemes`, `scheme_texts`, `scheme_crops`; `import_scheme()` (service role); read-only RLS. |
 | `20261003094055_slice13_crop_insurance.sql` | `insurance_products`, `insurance_texts`, `insurance_crops`; `import_insurance_product()` (service role); read-only RLS. |
+| `20261003110337_slice15_crop_health_ai.sql` | `crop_health_analyses` (limits, feedback-only updates); RLS. |
 
 
 Database migrations must be version-controlled.

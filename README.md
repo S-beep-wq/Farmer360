@@ -17,7 +17,8 @@ shown on the plot for planning the next crop → crop photos and notes over time
 quantity, call them or say they are interested → government schemes that may be relevant (by
 district and crops), from official sources loaded by the team (see `docs/SCHEMES.md`) → crop
 insurance information on each crop (see `docs/INSURANCE.md`) → crop planning: compare crops for a
-plot and season from the farmer's own past seasons, buyers and support.
+plot and season from the farmer's own past seasons, buyers and support → AI crop-health help on
+crop photos (when `ANTHROPIC_API_KEY` is set).
 The interface is in Hindi by default, with English available.
 
 ## Stack
@@ -36,7 +37,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900020`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900021`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run
@@ -67,6 +68,7 @@ src/
 ├── features/
 │   ├── account/         # account deletion (incl. photos in storage)
 │   ├── auth/            # phone OTP login
+│   ├── crop-health-ai/  # AI suggestions on crop photos (server-only service, cautious rules)
 │   ├── crop-records/    # work done (activities) and costs (expenses)
 │   ├── crops/           # crop catalog and crop cycles
 │   ├── farmer/          # profile + language
@@ -94,6 +96,8 @@ repository (Supabase queries under the farmer's session) → Postgres with RLS.
 ## Configuration for production
 
 - Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Vercel.
+- Optional: set `ANTHROPIC_API_KEY` (server only) to turn on AI crop-health help. Without it the
+  feature is hidden. End-to-end tests use a local stand-in API instead (`tests/support/mock-anthropic.ts`).
   **Never** set `SUPABASE_SECRET_KEY` there; the app does not use it.
 - Configure a real SMS provider for phone auth in the hosted Supabase project, and do not
   configure test OTP numbers there.
