@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Version** | 0.1 |
-| **Database** | PostgreSQL / Supabase |
+| **Version** | 0.2 |
+| **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
 ---
@@ -95,6 +95,8 @@ Rules:
 - `user_id` links to the authenticated user.
 - Phone number must be appropriately protected.
 - A farmer must only access their own profile.
+- `user_id` defaults to `auth.uid()`, and a trigger copies `phone` from the verified login
+  (`auth.users.phone`). Neither can be set or changed by the client.
 
 ## 4. `farms`
 
@@ -117,6 +119,7 @@ irrigation_available
 irrigation_type
 soil_type
 soil_source
+notes
 created_at
 updated_at
 ```
@@ -126,6 +129,8 @@ Relationship:
 ```text
 farmer 1 → many farms
 ```
+
+`notes` was added in v0.2 because USER_WORKFLOWS.md section 3 lists "optional notes" for a farm.
 
 ## 5. `plots`
 
@@ -141,6 +146,10 @@ area
 area_unit
 latitude
 longitude
+location_source
+location_accuracy_m
+boundary
+boundary_area_sq_m
 soil_type
 soil_ph
 soil_source
@@ -158,6 +167,60 @@ farm 1 → many plots
 ```
 
 The plot is the primary unit for crop-cycle management.
+
+### Plot location and boundary (added in v0.2)
+
+The first vertical slice needs plot location from the phone, a map pin, or a drawn boundary.
+The four location columns were added for that:
+
+| Column | Type | Meaning |
+|---|---|---|
+| `latitude`, `longitude` | `numeric(9,6)`, WGS 84 | One representative point for the plot. |
+| `location_source` | text | How the point was set: `device_gps` (phone location), `map_pin` (tapped on the map) or `boundary_centroid` (centre of the drawn boundary). Required when a point is stored. |
+| `location_accuracy_m` | numeric | Accuracy reported by the phone, in metres. Only for `device_gps`. |
+| `boundary` | `geography(Polygon, 4326)` (PostGIS) | The field boundary, drawn by tapping its corners on the map. |
+| `boundary_area_sq_m` | numeric | Area of `boundary` in square metres. **Calculated by a database trigger** (`ST_Area` on the spheroid); any value sent by a client is overwritten. |
+
+Rules enforced in the database:
+
+- `latitude`/`longitude` are both set or both empty, and a point always has a `location_source`.
+- `area` and `area_unit` are both set or both empty.
+- A plot must have an `area` (stated by the farmer) or a `boundary`, or both.
+- The boundary must be a valid polygon (no self-crossing), have at most 500 corners, and be
+  larger than 0 and at most 1,000 ha (a larger "plot" is treated as a drawing mistake).
+- If a boundary is given without a point, the point is set to the boundary's centre with
+  `location_source = 'boundary_centroid'`.
+
+`area` (what the farmer says) and `boundary_area_sq_m` (what the map measures) are kept
+separately and both shown, because they can legitimately differ. Neither overwrites the other.
+
+The API writes `boundary` as EWKT (`SRID=4326;POLYGON((lng lat, ...))`) and reads it as GeoJSON
+through the computed field `boundary_geojson` (`select=boundary_geojson`).
+
+### Allowed values (v0.2)
+
+Stored as `text` with `CHECK` constraints, so a value can be added with a small migration:
+
+- `area_unit` (farms, plots): `acre`, `decimal` (1/100 acre, "dismil"), `hectare`.
+  Bigha and katha are **not** supported yet because their size differs between regions of Bihar;
+  adding them needs a confirmed conversion for the pilot district.
+- `irrigation_type`: `tubewell`, `canal`, `well`, `pond_or_river`, `other`.
+  "Rainfed" is `irrigation_available = false`.
+- `soil_type`: `loam`, `clay`, `sandy`, `sandy_loam`, `clay_loam`, `other`, `unknown`.
+- `soil_source`: `farmer_estimate`, `soil_health_card`, `lab_test`.
+
+### Future: government land records / GIS
+
+There is no government land-record integration, and the app does not assume one. When an
+authorised integration exists, it should be added without changing the columns above:
+
+- a new `location_source` value (for example `land_record`) for points or boundaries taken from
+  an official record;
+- a separate table (for example `plot_land_records`) holding the record reference, the provider,
+  the retrieval and verification dates and the official geometry, linked to `plots.id`, so that
+  official data stays separate from farmer-drawn data (SYSTEM_ARCHITECTURE.md section 12);
+- a server-side adapter per provider. Official geometry must never silently replace the
+  farmer's own boundary; both are kept and shown.
 
 ## 6. `crop_catalog`
 
@@ -683,6 +746,20 @@ Owned Records
 
 A farmer must never be able to access another farmer's private farm data through manipulated requests.
 
+Implemented in v0.2 for `farmers`, `farms` and `plots`:
+
+- RLS is enabled on every table, and the `anon` role has no access at all.
+- `public.current_farmer_id()` returns the signed-in user's farmer id. `farms.farmer_id`
+  defaults to it, and farm policies compare against it.
+- Plot policies check that the plot's farm belongs to the signed-in farmer, for reads, inserts
+  and updates (so a plot cannot be moved onto someone else's farm).
+- There are **no DELETE policies** and `DELETE` is revoked: history is preserved (section 24).
+  Deleting an auth user (account removal) cascades to their farmer data.
+- The application only ever uses the publishable key with the farmer's session. The secret key is
+  used only by local tests for cleanup.
+
+These rules are covered by `tests/integration/farm-data.test.ts`.
+
 ## 27. Data Integrity
 
 Use database constraints for critical relationships.
@@ -700,6 +777,13 @@ Examples:
 Application validation should complement database constraints.
 
 ## 28. Data Evolution
+
+Migrations live in `supabase/migrations/`. Applied so far:
+
+| Migration | Contents |
+|---|---|
+| `20261003044516_slice1_farmers_farms_plots.sql` | PostGIS; `farmers`, `farms`, `plots` with location/boundary; triggers; RLS. |
+
 
 Database migrations must be version-controlled.
 
