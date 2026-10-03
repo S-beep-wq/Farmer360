@@ -1,3 +1,5 @@
+import type { ForecastDay } from "@/features/weather/forecast";
+import type { WeatherPoint } from "@/features/weather/location";
 import type { Locale } from "@/lib/i18n";
 
 // The farm facts sent with a question (SYSTEM_ARCHITECTURE.md section 11): only what the task
@@ -24,7 +26,10 @@ export type FarmContext = {
   today: string;
   district: string;
   state: string;
-  plots: { name: string; farm: string; area: string | null; soil: string | null; irrigation: string | null }[];
+  /** `point` is used to fetch the weather and is never sent to the AI. */
+  plots: { name: string; farm: string; area: string | null; soil: string | null; irrigation: string | null; point: WeatherPoint | null }[];
+  /** Forecasts for the plots in question; empty when there are none. */
+  weather: { plot: string; days: ForecastDay[] }[];
   crops: ContextCrop[];
   activities: { date: string; crop: string; type: string }[];
   observations: { date: string; crop: string; status: string; note: string | null }[];
@@ -52,12 +57,28 @@ function cropLine(c: ContextCrop): string {
   return `- ${parts.filter(Boolean).join("; ")}`;
 }
 
+function weatherLine(d: ForecastDay): string {
+  const rain = d.rainMm === null ? "rain unknown" : d.rainMm < 0.1 ? "no rain" : `rain ${d.rainMm} mm`;
+  const chance = d.rainChance === null ? "" : ` (${d.rainChance}% chance of rain)`;
+  const temp = d.tMinC === null || d.tMaxC === null ? "" : `, ${d.tMinC}–${d.tMaxC}°C`;
+  const wind = d.windMaxKmh === null ? "" : `, wind up to ${d.windMaxKmh} km/h`;
+  return `${d.date}: ${d.kind.toLowerCase().replace("_", " ")}, ${rain}${chance}${temp}${wind}`;
+}
+
+function weatherSection(c: FarmContext): string[] {
+  if (c.weather.length === 0) return ["Weather: not available to you. Do not guess today's weather or forecast."];
+  return [
+    "Weather forecast from weather models (Open-Meteo). It is a forecast for the area, not a measurement, and can be wrong, especially beyond 3 days:",
+    ...c.weather.flatMap((w) => [`- Plot "${w.plot}":`, ...w.days.map((d) => `  - ${weatherLine(d)}`)]),
+  ];
+}
+
 /** The facts, as plain text, ending with the question (marked as the farmer's words). */
 export function contextText(c: FarmContext, question: string): string {
   const sections = [
     `Today's date: ${c.today}`,
     `Place: ${c.district} district, ${c.state}, India`,
-    "Weather: not available to you. Do not guess today's weather or forecast.",
+    ...weatherSection(c),
     "",
     c.oneCrop ? "The question is about this crop:" : "Crops (planned, in the field or just harvested):",
     ...(c.crops.length ? c.crops.map(cropLine) : ["- none recorded"]),

@@ -13,6 +13,7 @@ import { countQuestionsToday, loadFarmContext, recordQuestion, setQuestionFeedba
 import { DAILY_QUESTION_LIMIT } from "./rules";
 import { questionSchema, type AssistantAnswer } from "./schema";
 import { askFarmAssistant } from "./service";
+import { withWeather } from "./weather";
 
 export type AssistantState = FormState & { answer?: AssistantAnswer; interactionId?: string };
 
@@ -48,7 +49,7 @@ export async function askAction(_prev: AssistantState, formData: FormData): Prom
   });
   if (!context) return { fieldErrors: { crop_cycle_id: "invalidChoice" }, values };
 
-  const outcome = await askFarmAssistant(parsed.data.question, context);
+  const outcome = await askFarmAssistant(parsed.data.question, await withWeather(context));
   if (!outcome.ok) return { formError: FAILURE[outcome.reason], values };
 
   const { id, error } = await recordQuestion(supabase, {

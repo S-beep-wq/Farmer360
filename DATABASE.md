@@ -1158,6 +1158,13 @@ Examples:
 
 Application validation should complement database constraints.
 
+## 27a. External data that is not stored
+
+Weather forecasts (slice 17) are fetched from Open-Meteo for a plot's location rounded to about
+5 km and cached by the application for an hour; they are not stored in the database (they hold no
+farmer data and go stale within hours). If observed weather is added later, store it with its
+source, retrieval time and area (SYSTEM_ARCHITECTURE.md section 12).
+
 ## 28. Data Evolution
 
 Migrations live in `supabase/migrations/`. Applied so far:

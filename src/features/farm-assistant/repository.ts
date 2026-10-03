@@ -1,5 +1,7 @@
 import { cropName, isCropCycleStatus, isSeason } from "@/features/crops/format";
 import { formatArea } from "@/features/plots/format";
+import { ringFromGeoJson } from "@/features/plots/location/geo";
+import { weatherPoint } from "@/features/weather/location";
 import { daysInField } from "@/features/season-review/summary";
 import { listCropTotals } from "@/features/season-review/repository";
 import { sumRupees } from "@/features/shared/money";
@@ -64,13 +66,28 @@ export async function loadFarmContext(
 
   const ids = cycles.map((c) => c.id);
   const since = new Date(Date.parse(`${opts.today}T00:00:00Z`) - 30 * 86_400_000).toISOString().slice(0, 10);
-  let plotQuery = supabase.from("plots").select("id, name, area, area_unit, soil_type, irrigation_available, irrigation_type, farm:farms(name)").order("created_at");
+  let plotQuery = supabase
+    .from("plots")
+    .select("id, name, area, area_unit, soil_type, irrigation_available, irrigation_type, latitude, longitude, boundary_geojson, farm:farms(name)")
+    .order("created_at");
   if (opts.cropCycleId) plotQuery = plotQuery.eq("id", cycles[0].plot_id);
 
   const [totals, plots, activities, observations] = await Promise.all([
     listCropTotals(supabase, ids),
     plotQuery.overrideTypes<
-      { id: string; name: string; area: number | null; area_unit: string | null; soil_type: string | null; irrigation_available: boolean | null; irrigation_type: string | null; farm: { name: string } }[],
+      {
+        id: string;
+        name: string;
+        area: number | null;
+        area_unit: string | null;
+        soil_type: string | null;
+        irrigation_available: boolean | null;
+        irrigation_type: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        boundary_geojson: unknown;
+        farm: { name: string };
+      }[],
       { merge: false }
     >(),
     ids.length
@@ -131,7 +148,9 @@ export async function loadFarmContext(
       area: formatArea(p.area, p.area_unit, en, "en"),
       soil: label(p.soil_type, en.soilTypes),
       irrigation: p.irrigation_available === null ? null : p.irrigation_available ? (label(p.irrigation_type, en.irrigationTypes) ?? "yes") : "none",
+      point: weatherPoint({ latitude: p.latitude, longitude: p.longitude, boundary: ringFromGeoJson(p.boundary_geojson) }),
     })),
+    weather: [],
     activities: (activities.data ?? []).map((a) => ({
       date: a.activity_date,
       crop: cropOf.get(a.crop_cycle_id) ?? "",

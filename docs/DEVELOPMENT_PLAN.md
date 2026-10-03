@@ -230,13 +230,33 @@ answers and the farmers' feedback before wider use.
 One question at a time (no conversation memory), and answers are not saved, by design (DATABASE.md
 section 20). Weather is not available to the assistant.
 
+## Slice 17 — Weather forecasts ✅ complete
+
+| Task | Status |
+|---|---|
+| Provider adapter for Open-Meteo (server only; customer API when `OPEN_METEO_API_KEY` is set), response checked and normalised | ✅ |
+| Plot page: "Weather for this plot" — 7 days (sky, rain in mm with IMD rain category and chance, min–max °C, wind), "now (estimate)" | ✅ |
+| Heavy-rain (IMD "heavy" or worse) and very-hot-day (40 °C or more) warnings | ✅ |
+| Clearly a forecast from weather models, with source, update time and "can be wrong"; streamed so the page does not wait | ✅ |
+| Plot location rounded to about 5 km before it is sent to the provider; no location → "add the plot's location" | ✅ |
+| Farm assistant gets the forecast for the plots in question (at most two locations), labelled as a forecast | ✅ |
+| Unit, integration (against a local stand-in shaped like Open-Meteo) and end-to-end tests | ✅ |
+
+No migration: forecasts are cached for an hour per rounded location (Next.js data cache), not stored
+in the database, because they contain no farmer data and change hourly. Not built: recent observed
+weather, IMD as a source, weather in crop planning.
+
+**Not yet checked against the real Open-Meteo API**: this environment's network policy blocks
+`api.open-meteo.com`, so the adapter was built from Open-Meteo's documented response format and
+tested against a stand-in. Check one real response before release.
+
 ## Next slices (proposed, not started)
 
 1. Verified crop reference data for planning (duration, water and labour needs, typical cost and
    price ranges for the pilot district, which seasons each crop suits), loaded with a source and
    check date like schemes — needs a source agreed with agronomists.
-2. Weather data from an authoritative provider (SYSTEM_ARCHITECTURE.md section 13), which would also
-   let the farm assistant answer "what should I do today?" better.
+2. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
+   a second, official source.
 
 ## Open questions for the product owner
 
@@ -275,6 +295,8 @@ section 20). Weather is not available to the assistant.
   7 days to change one's mind), or an export of the farmer's records before deleting?
 - Changing the mobile number (e.g. a new SIM) needs a verified OTP to the new number. Not built;
   today a farmer with a new number would start a new account.
+- Weather: Open-Meteo is free only for non-commercial use. Which plan (or IMD access) will be used
+  in production?
 - Farm assistant: should farmers be able to see their earlier questions and answers (which would mean
   storing them, with consent and a retention period)? Should it hold a short conversation?
 - AI crop-health help: who reviews the stored AI answers and feedback during field validation, and

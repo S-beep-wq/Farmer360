@@ -16,7 +16,8 @@ const context: FarmContext = {
   district: "Vaishali",
   state: "Bihar",
   oneCrop: false,
-  plots: [{ name: "Back plot", farm: "Home farm", area: "1 acre", soil: "Loam", irrigation: "Tubewell" }],
+  plots: [{ name: "Back plot", farm: "Home farm", area: "1 acre", soil: "Loam", irrigation: "Tubewell", point: { lat: 25.7, lon: 85.2 } }],
+  weather: [],
   crops: [
     {
       crop: "Maize",
@@ -65,7 +66,8 @@ describe("contextText", () => {
 describe("SYSTEM_PROMPT", () => {
   it("forbids invented farm facts, weather, chemicals and eligibility claims", () => {
     expect(SYSTEM_PROMPT).toMatch(/Do not invent facts about the farm/);
-    expect(SYSTEM_PROMPT).toMatch(/never state or guess the weather/);
+    expect(SYSTEM_PROMPT).toMatch(/say it is a forecast that can be wrong/);
+    expect(SYSTEM_PROMPT).toMatch(/must never state or guess it/);
     expect(SYSTEM_PROMPT).toMatch(/Never name a pesticide/);
     expect(SYSTEM_PROMPT).toMatch(/do not say whether the farmer is eligible/);
   });

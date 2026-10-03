@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { Card, DetailRow, LinkButton, Page, PageTitle } from "@/components/ui/layout";
 import { CropStatusBadge } from "@/features/crops/components/CropStatusBadge";
@@ -13,6 +14,8 @@ import { formatArea, formatMeasuredArea } from "@/features/plots/format";
 import { PlotsMap } from "@/features/plots/location/PlotsMap";
 import { getPlot } from "@/features/plots/repository";
 import { IRRIGATION_TYPES, LOCATION_SOURCES, SOIL_TYPES } from "@/features/shared/land";
+import { PlotWeather } from "@/features/weather/components/PlotWeather";
+import { weatherPoint } from "@/features/weather/location";
 import { requireFarmer } from "@/lib/auth";
 import { format } from "@/lib/i18n";
 import { getServerMessages } from "@/lib/i18n/server";
@@ -93,6 +96,19 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
         <LinkButton href={`/farms/${farm.id}/plots/${plot.id}/plan`} variant="secondary">
           {t.planning.link}
         </LinkButton>
+      </section>
+
+      <section className="flex flex-col gap-3" aria-labelledby="plot-weather">
+        <h2 id="plot-weather" className="text-2xl font-semibold">
+          {t.weather.title}
+        </h2>
+        {weatherPoint(plot) ? (
+          <Suspense fallback={<p className="text-lg text-stone-600">…</p>}>
+            <PlotWeather t={t} locale={locale} point={weatherPoint(plot)!} />
+          </Suspense>
+        ) : (
+          <p className="text-lg text-stone-700">{t.weather.noLocation}</p>
+        )}
       </section>
 
       <Card>
