@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.9 |
+| **Version** | 0.10 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -98,6 +98,10 @@ Rules:
 - A farmer must only access their own profile.
 - `user_id` defaults to `auth.uid()`, and a trigger copies `phone` from the verified login
   (`auth.users.phone`). Neither can be set or changed by the client.
+- Farmers may change only `full_name`, `preferred_language`, `state`, `district`, `village` and
+  `deletion_requested_at` (column-level `UPDATE` grant, v0.10). Changing `id`, `user_id`, `phone`
+  or the timestamps is refused. Changing the profile's state or district does not change farms
+  already added (each farm keeps the state and district it was created with).
 
 ### Account deletion (v0.9)
 
@@ -1023,6 +1027,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003064819_slice7_season_review.sql` | `crop_cycles.completed_at`; payment updates after closing; `crop_cycle_totals` view. |
 | `20261003073427_slice8_crop_observations.sql` | `crop_observations` (column grants), `crop_photos`, `crop-photos` bucket and storage policies. |
 | `20261003075538_slice9_account_deletion.sql` | `farmers.deletion_requested_at`; request-gated photo delete policies; `account_photo_paths()`, `delete_my_account()`. |
+| `20261003082222_slice10_farmer_profile_editing.sql` | Column-level `UPDATE` grant on `farmers` (profile fields only). |
 
 
 Database migrations must be version-controlled.

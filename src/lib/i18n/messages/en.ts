@@ -381,6 +381,9 @@ export const en = {
   },
   account: {
     profileLink: "My profile and account",
+    editLink: "Change my details",
+    editTitle: "Change my details",
+    editHint: "Your mobile number cannot be changed here. Farms you have already added keep their state and district.",
     profileTitle: "My profile",
     deleteTitle: "Delete my account",
     deleteIntro: "Remove your account and everything you have recorded in Kisan 360.",

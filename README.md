@@ -12,7 +12,7 @@ and plot → add crops to a plot and track them (sown, harvest finished, cancell
 record work done and costs, with the total spent per crop → record harvests and sales, and see
 each crop's result (money from sales − costs) → review and close the season, with past results
 shown on the plot for planning the next crop → crop photos and notes over time (crop health timeline)
-→ profile page and account deletion (removes all data and photos).
+→ profile page (change your details) and account deletion (removes all data and photos).
 The interface is in Hindi by default, with English available.
 
 ## Stack
@@ -31,7 +31,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900012`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900013`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run

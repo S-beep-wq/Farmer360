@@ -124,7 +124,15 @@ ready and protected, but choosing and validating an AI service is a separate dec
 | A deletion that fails midway is finished on the next visit; the same number can start again | ✅ |
 | Unit, integration (incl. storage and other farmers) and end-to-end tests | ✅ |
 
-Editing the profile (name, village, district) is not part of this slice.
+## Slice 10 — Farmer profile editing ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: farmers may update only their profile fields (column-level grant) | ✅ |
+| "Change my details" from the profile: name, language, state, district, village (saved values prefilled) | ✅ |
+| Mobile number shown but not editable; farms already added keep their state and district | ✅ |
+| Changing the language switches the app and is remembered | ✅ |
+| Integration and end-to-end tests | ✅ |
 
 ## Next slices (proposed, not started)
 
@@ -132,7 +140,6 @@ Editing the profile (name, village, district) is not part of this slice.
 2. Buyer discovery (section 14) — the marketplace `buyers` table.
 3. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
    a confidence/uncertainty design and field validation.
-4. Editing the farmer profile (name, village, district).
 
 ## Open questions for the product owner
 
@@ -153,4 +160,6 @@ Editing the profile (name, village, district) is not part of this slice.
 - Should a sale record how much money has been received so far (for "partly paid")?
 - Account deletion is immediate and permanent. Should there be a waiting period (for example,
   7 days to change one's mind), or an export of the farmer's records before deleting?
+- Changing the mobile number (e.g. a new SIM) needs a verified OTP to the new number. Not built;
+  today a farmer with a new number would start a new account.
 - Hindi wording should be reviewed by a native speaker from the pilot area.

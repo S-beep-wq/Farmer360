@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { Page, PageTitle } from "@/components/ui/layout";
+import { createFarmerProfileAction } from "@/features/farmer/actions";
 import { ProfileForm } from "@/features/farmer/components/ProfileForm";
 import { getFarmerForUser } from "@/features/farmer/repository";
 import { requireUser } from "@/lib/auth";
@@ -16,7 +17,7 @@ export default async function OnboardingPage() {
     <Page>
       <PageTitle>{t.onboarding.title}</PageTitle>
       <p className="text-lg text-stone-700">{t.onboarding.intro}</p>
-      <ProfileForm t={t} locale={locale} />
+      <ProfileForm t={t} locale={locale} action={createFarmerProfileAction} submitLabel={t.onboarding.submit} />
     </Page>
   );
 }

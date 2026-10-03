@@ -65,17 +65,34 @@ describe("farmer profile", () => {
     expect(error?.code).toBe("23505");
   });
 
-  it("keeps user_id and phone when updated", async () => {
+  it("can be changed by the farmer: name, language, state, district and village", async () => {
     const { data: bFarmer } = await b.from("farmers").insert(PROFILE).select("id").single();
     bFarmerId = bFarmer!.id;
-    const { data, error } = await a
-      .from("farmers")
-      .update({ phone: "+10000000000", full_name: "Renamed" })
-      .eq("id", aFarmerId)
-      .select("user_id, phone, full_name")
-      .single();
+    const changes = { full_name: "Renamed", preferred_language: "en", state: "Uttar Pradesh", district: "Ballia", village: "Bansdih" };
+    const { data, error } = await a.from("farmers").update(changes).eq("id", aFarmerId).select("user_id, phone, full_name, preferred_language, state, district, village").single();
     expect(error).toBeNull();
-    expect(data).toEqual({ user_id: aUserId, phone: TEST_PHONES.integrationA, full_name: "Renamed" });
+    expect(data).toEqual({ user_id: aUserId, phone: TEST_PHONES.integrationA, ...changes });
+  });
+
+  it("refuses changes to the login, phone, id or timestamps", async () => {
+    for (const forged of [{ phone: "+10000000000" }, { user_id: aUserId }, { id: crypto.randomUUID() }, { created_at: "2000-01-01T00:00:00Z" }]) {
+      const { error } = await a.from("farmers").update(forged).eq("id", aFarmerId);
+      expect(error?.code, JSON.stringify(forged)).toBe("42501");
+    }
+    const { data } = await a.from("farmers").select("phone").eq("id", aFarmerId).single();
+    expect(data!.phone).toBe(TEST_PHONES.integrationA);
+  });
+
+  it("still checks the values on change", async () => {
+    expect((await a.from("farmers").update({ full_name: "  " }).eq("id", aFarmerId)).error?.code).toBe("23514");
+    expect((await a.from("farmers").update({ preferred_language: "fr" }).eq("id", aFarmerId)).error?.code).toBe("23514");
+  });
+
+  it("cannot be changed by another farmer", async () => {
+    const { data } = await b.from("farmers").update({ full_name: "Hacked" }).eq("id", aFarmerId).select("id");
+    expect(data).toEqual([]);
+    const { data: mine } = await a.from("farmers").select("full_name").eq("id", aFarmerId).single();
+    expect(mine!.full_name).toBe("Renamed");
   });
 
   it("is invisible to other farmers", async () => {

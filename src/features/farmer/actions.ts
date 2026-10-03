@@ -3,13 +3,13 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { getCurrentUser, requireUser } from "@/lib/auth";
+import { getCurrentUser, requireFarmer, requireUser } from "@/lib/auth";
 import { fieldErrorsFrom, formValues, type FormState } from "@/lib/forms";
 import { isLocale } from "@/lib/i18n";
 import { setLocaleCookie } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
-import { getFarmerForUser, insertFarmer, updateFarmerLanguage } from "./repository";
+import { getFarmerForUser, insertFarmer, updateFarmerLanguage, updateFarmerProfile } from "./repository";
 import { farmerProfileSchema } from "./schema";
 
 const UNIQUE_VIOLATION = "23505";
@@ -32,6 +32,27 @@ export async function createFarmerProfileAction(_prev: FormState, formData: Form
 
   await setLocaleCookie(parsed.data.preferred_language);
   redirect("/farms");
+}
+
+export async function updateFarmerProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireFarmer();
+  const user = await requireUser();
+  const values = formValues(formData);
+
+  const parsed = farmerProfileSchema.safeParse(values);
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrorsFrom(parsed.error), values };
+  }
+
+  const supabase = await createClient();
+  const { error } = await updateFarmerProfile(supabase, user.id, parsed.data);
+  if (error) {
+    console.error("updateFarmerProfile failed", { userId: user.id, code: error.code });
+    return { formError: "generic", values };
+  }
+
+  await setLocaleCookie(parsed.data.preferred_language);
+  redirect("/profile");
 }
 
 /** Switches the interface language, and remembers it on the profile when there is one. */

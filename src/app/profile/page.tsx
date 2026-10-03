@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Card, DetailRow, Page, PageTitle } from "@/components/ui/layout";
+import { Card, DetailRow, LinkButton, Page, PageTitle } from "@/components/ui/layout";
 import { displayPhone } from "@/features/auth/phone";
 import { requireFarmer } from "@/lib/auth";
 import { isLocale } from "@/lib/i18n";
@@ -28,6 +28,9 @@ export default async function ProfilePage() {
           />
         </dl>
       </Card>
+      <LinkButton href="/profile/edit" variant="secondary">
+        {t.account.editLink}
+      </LinkButton>
       <section className="flex flex-col gap-3 border-t-2 border-stone-200 pt-6">
         <h2 className="text-2xl font-semibold text-stone-900">{t.account.deleteTitle}</h2>
         <p className="text-lg text-stone-700">{t.account.deleteIntro}</p>

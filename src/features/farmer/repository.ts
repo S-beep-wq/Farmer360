@@ -25,6 +25,12 @@ export async function insertFarmer(supabase: ServerSupabaseClient, input: Farmer
   return { error };
 }
 
+/** Saves the farmer's changed profile. Phone and login stay as they are. */
+export async function updateFarmerProfile(supabase: ServerSupabaseClient, userId: string, input: FarmerProfileInput) {
+  const { error } = await supabase.from("farmers").update(input).eq("user_id", userId);
+  return { error };
+}
+
 export async function updateFarmerLanguage(supabase: ServerSupabaseClient, userId: string, locale: Locale) {
   const { error } = await supabase.from("farmers").update({ preferred_language: locale }).eq("user_id", userId);
   if (error) throw error;
