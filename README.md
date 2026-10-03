@@ -6,8 +6,9 @@ The product is specified in [`PRODUCT_SPEC.md`](./PRODUCT_SPEC.md),
 and [`DATABASE.md`](./DATABASE.md). The build plan and progress are in
 [`docs/DEVELOPMENT_PLAN.md`](./docs/DEVELOPMENT_PLAN.md).
 
-**Built so far (slice 1):** phone login → farmer profile → farm → plot with location
-(phone GPS, map pin and/or drawn boundary, with area calculated in the database) → view farm and plot.
+**Built so far:** phone login → farmer profile → farm → plot with location
+(phone GPS, map pin and/or drawn boundary, with area calculated in the database) → edit farm
+and plot → add crops to a plot (planned or already sown).
 The interface is in Hindi by default, with English available.
 
 ## Stack
@@ -26,7 +27,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900006`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900007`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run
@@ -56,6 +57,7 @@ src/
 ├── components/          # shared UI (large touch targets)
 ├── features/
 │   ├── auth/            # phone OTP login
+│   ├── crops/           # crop catalog and crop cycles
 │   ├── farmer/          # profile + language
 │   ├── farms/
 │   ├── plots/           # incl. location/ (map, GPS, boundary, geometry)

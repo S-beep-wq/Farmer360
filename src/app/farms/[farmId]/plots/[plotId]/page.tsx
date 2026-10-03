@@ -1,6 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Card, DetailRow, LinkButton, Page, PageTitle } from "@/components/ui/layout";
+import { CropStatusBadge } from "@/features/crops/components/CropStatusBadge";
+import { cropName, isCropCycleStatus, isSeason, sowingSummary } from "@/features/crops/format";
+import { listCropCycles } from "@/features/crops/repository";
 import { getFarm } from "@/features/farms/repository";
 import { isId } from "@/features/farms/schema";
 import { formatArea, formatMeasuredArea } from "@/features/plots/format";
@@ -22,7 +26,11 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
   if (!isId(farmId) || !isId(plotId)) notFound();
 
   const supabase = await createClient();
-  const [farm, plot] = await Promise.all([getFarm(supabase, farmId), getPlot(supabase, farmId, plotId)]);
+  const [farm, plot, cycles] = await Promise.all([
+    getFarm(supabase, farmId),
+    getPlot(supabase, farmId, plotId),
+    listCropCycles(supabase, plotId),
+  ]);
   if (!farm || !plot) notFound();
 
   const { locale, t } = await getServerMessages();
@@ -47,6 +55,32 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
       ) : (
         <p className="text-lg text-stone-700">{t.plots.noLocation}</p>
       )}
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-semibold">{t.crops.title}</h2>
+        {cycles.length === 0 ? (
+          <p className="text-lg text-stone-700">{t.crops.noCrops}</p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {cycles.map((cycle) => (
+              <li key={cycle.id}>
+                <Link
+                  href={`/farms/${farm.id}/plots/${plot.id}/crops/${cycle.id}`}
+                  className="flex flex-col gap-2 rounded-2xl border-2 border-stone-200 bg-white p-4 shadow-sm hover:border-green-700 focus:outline-none focus:ring-4 focus:ring-green-300"
+                >
+                  <span className="text-xl font-semibold">
+                    {cropName(cycle.crop, locale)}
+                    {isSeason(cycle.season) ? <span className="font-normal text-stone-600"> · {t.seasons[cycle.season]}</span> : null}
+                  </span>
+                  {isCropCycleStatus(cycle.status) ? <CropStatusBadge status={cycle.status} t={t} /> : null}
+                  <span className="text-lg text-stone-700">{sowingSummary(cycle, t, locale)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <LinkButton href={`/farms/${farm.id}/plots/${plot.id}/crops/new`}>{t.crops.addCrop}</LinkButton>
+      </section>
 
       <Card>
         <dl>
@@ -82,7 +116,9 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
         </dl>
       </Card>
 
-      <LinkButton href={`/farms/${farm.id}/plots/${plot.id}/edit`}>{t.common.edit}</LinkButton>
+      <LinkButton href={`/farms/${farm.id}/plots/${plot.id}/edit`} variant="secondary">
+        {t.common.edit}
+      </LinkButton>
       <LinkButton href={`/farms/${farm.id}`} variant="secondary">
         {farm.name}
       </LinkButton>

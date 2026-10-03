@@ -5,7 +5,45 @@ export type Database = {
   
   "public": {
           Tables: {
-            "farmers": {
+            "crop_catalog": {
+                  Row: {
+                    "category": string,"created_at": string,"description": string | null,"id": string,"labour_requirement": string | null,"name": string,"name_hi": string,"scientific_name": string | null,"season": string | null,"typical_duration_days": number | null,"updated_at": string,"water_requirement": string | null
+                  }
+                  Insert: {
+                    "category": string,"created_at"?: string,"description"?: string | null,"id"?: string,"labour_requirement"?: string | null,"name": string,"name_hi": string,"scientific_name"?: string | null,"season"?: string | null,"typical_duration_days"?: number | null,"updated_at"?: string,"water_requirement"?: string | null
+                  }
+                  Update: {
+                    "category"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"labour_requirement"?: string | null,"name"?: string,"name_hi"?: string,"scientific_name"?: string | null,"season"?: string | null,"typical_duration_days"?: number | null,"updated_at"?: string,"water_requirement"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"crop_cycles": {
+                  Row: {
+                    "actual_harvest_date": string | null,"actual_sowing_date": string | null,"created_at": string,"crop_id": string,"current_growth_stage": string | null,"expected_harvest_date": string | null,"id": string,"notes": string | null,"planned_sowing_date": string | null,"plot_id": string,"season": string,"status": string,"updated_at": string,"variety_name": string | null
+                  }
+                  Insert: {
+                    "actual_harvest_date"?: string | null,"actual_sowing_date"?: string | null,"created_at"?: string,"crop_id": string,"current_growth_stage"?: string | null,"expected_harvest_date"?: string | null,"id"?: string,"notes"?: string | null,"planned_sowing_date"?: string | null,"plot_id": string,"season": string,"status"?: string,"updated_at"?: string,"variety_name"?: string | null
+                  }
+                  Update: {
+                    "actual_harvest_date"?: string | null,"actual_sowing_date"?: string | null,"created_at"?: string,"crop_id"?: string,"current_growth_stage"?: string | null,"expected_harvest_date"?: string | null,"id"?: string,"notes"?: string | null,"planned_sowing_date"?: string | null,"plot_id"?: string,"season"?: string,"status"?: string,"updated_at"?: string,"variety_name"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "crop_cycles_crop_id_fkey"
+      columns: ["crop_id"]
+isOneToOne: false
+      referencedRelation: "crop_catalog"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "crop_cycles_plot_id_fkey"
+      columns: ["plot_id"]
+isOneToOne: false
+      referencedRelation: "plots"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"farmers": {
                   Row: {
                     "created_at": string,"district": string,"full_name": string,"id": string,"phone": string | null,"preferred_language": string,"state": string,"updated_at": string,"user_id": string,"village": string
                   }
@@ -67,6 +105,9 @@ isOneToOne: false
                            },
 "current_farmer_id":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"owns_plot":
+{ Args: { "p_plot_id": string }; Returns: boolean
                            }
           }
           Enums: {

@@ -36,12 +36,22 @@ Register → farmer profile → create farm → create plot → capture plot loc
 Editing overwrites the current values (with `updated_at`); earlier boundaries are not kept.
 See "Open questions" below.
 
+## Slice 3 — Crop cycle creation ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `crop_catalog` (starter list, names in English and Hindi), `crop_cycles`, RLS | ✅ |
+| Add a crop to a plot: crop, variety (typed), season, already sown?, sowing date, expected harvest | ✅ |
+| Crop page; crops listed on the plot page; current crops shown on the farm page | ✅ |
+| Fix: dropdown choices were lost after a form error (all forms) | ✅ |
+| Unit, integration and end-to-end tests | ✅ |
+
 ## Next slices (proposed, not started)
 
-1. **Crop cycle creation** (USER_WORKFLOWS.md section 6) — needs `crop_catalog` with a small,
-   verified crop list for the pilot district.
-2. Crop activities (section 7) and expenses (section 12).
-3. Crop observations with photos (section 8–9) — needs Supabase Storage.
+1. **Crop status changes**: record sowing for a planned crop, mark harvested, cancel; edit a
+   crop's details. Without these a planned crop can never become "in the field" in the app.
+2. Crop activities (USER_WORKFLOWS.md section 7) and expenses (section 12).
+3. Crop observations with photos (sections 8–9) — needs Supabase Storage.
 4. Harvest, sale and season economics (sections 13, 15, 16).
 5. Government scheme / insurance information (sections 10–11).
 
@@ -52,4 +62,7 @@ See "Open questions" below.
 - Which map tile provider (ideally satellite imagery) and SMS provider will be used in production?
 - Once crop cycles exist, should a plot's earlier boundaries be kept (so past seasons keep the
   area they were grown on)? Today an edit replaces the boundary.
+- Which crops (and, later, which verified varieties and durations) should the catalog hold for the
+  pilot district? The starter list is a reasonable guess, not a validated list.
+- Should a farmer be able to add a crop that is not in the catalog ("other")? Today they cannot.
 - Hindi wording should be reviewed by a native speaker from the pilot area.

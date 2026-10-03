@@ -2,12 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { LinkButton, Page, PageTitle } from "@/components/ui/layout";
+import { cropName } from "@/features/crops/format";
+import { listOpenCropsByPlot } from "@/features/crops/repository";
 import { getFarm } from "@/features/farms/repository";
 import { isId } from "@/features/farms/schema";
 import { formatArea, formatMeasuredArea } from "@/features/plots/format";
 import { PlotsMap } from "@/features/plots/location/PlotsMap";
 import { listPlots } from "@/features/plots/repository";
 import { requireFarmer } from "@/lib/auth";
+import { format } from "@/lib/i18n";
 import { getServerMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,7 +24,11 @@ export default async function FarmPage({ params }: PageProps<"/farms/[farmId]">)
   const farm = await getFarm(supabase, farmId);
   if (!farm) notFound();
 
-  const [{ locale, t }, plots] = await Promise.all([getServerMessages(), listPlots(supabase, farmId)]);
+  const [{ locale, t }, plots, openCrops] = await Promise.all([
+    getServerMessages(),
+    listPlots(supabase, farmId),
+    listOpenCropsByPlot(supabase, farmId),
+  ]);
   const mappedPlots = plots.filter((p) => p.boundary || p.latitude !== null);
 
   return (
@@ -60,6 +67,13 @@ export default async function FarmPage({ params }: PageProps<"/farms/[farmId]">)
                     {formatArea(plot.area, plot.area_unit, t, locale) ??
                       (plot.boundary_area_sq_m !== null ? formatMeasuredArea(plot.boundary_area_sq_m, t, locale) : null)}
                   </span>
+                  {openCrops.get(plot.id)?.length ? (
+                    <span className="text-lg font-medium text-green-800">
+                      {format(t.crops.nowOnPlot, {
+                        crops: openCrops.get(plot.id)!.map((c) => cropName(c.crop, locale)).join(", "),
+                      })}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             ))}

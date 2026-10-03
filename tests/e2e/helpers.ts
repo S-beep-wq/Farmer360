@@ -49,3 +49,17 @@ export async function tapMap(map: Locator, offsets: [number, number][]) {
     await map.click({ position: { x: box.width / 2 + dx, y: box.height / 2 + dy } });
   }
 }
+
+/** Logs in and, on a farmer's first login, completes the profile (in English). */
+export async function logInWithProfile(page: Page, phone: string, profile: { name: string; district: string; village: string }) {
+  await logIn(page, phone);
+  await page.waitForURL(/\/(onboarding|farms)$/);
+  if (page.url().endsWith("/onboarding")) {
+    await page.getByLabel("Your name").fill(profile.name);
+    await page.getByText("English", { exact: true }).click();
+    await page.getByLabel("District").fill(profile.district);
+    await page.getByLabel("Village").fill(profile.village);
+    await page.getByRole("button", { name: "Continue" }).click();
+  }
+  await expect(page).toHaveURL(/\/farms$/);
+}

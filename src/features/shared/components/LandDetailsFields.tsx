@@ -44,6 +44,8 @@ export function AreaField({ t, name, label, hint, error, value, onValueChange, u
               : { defaultValue })}
           />
           <select
+            // Remount when the saved unit changes, so a form reset keeps it (see SelectField).
+            key={onUnitChange ? undefined : defaultUnit}
             name="area_unit"
             aria-label={t.farms.unitLabel}
             className={`${controlClass} w-40 shrink-0 px-3`}

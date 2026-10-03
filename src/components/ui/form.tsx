@@ -90,6 +90,34 @@ export function TextField({
   );
 }
 
+type DateFieldProps = Omit<FieldProps, "children"> & {
+  name: string;
+  defaultValue?: string;
+  max?: string;
+  min?: string;
+};
+
+/** Native date picker: familiar on phones and returns YYYY-MM-DD. */
+export function DateField({ name, defaultValue, max, min, ...field }: DateFieldProps) {
+  return (
+    <Field {...field}>
+      {({ id, describedBy, invalid }) => (
+        <input
+          id={id}
+          name={name}
+          type="date"
+          defaultValue={defaultValue}
+          max={max}
+          min={min}
+          aria-describedby={describedBy}
+          aria-invalid={invalid}
+          className={controlClass}
+        />
+      )}
+    </Field>
+  );
+}
+
 type SelectFieldProps = Omit<FieldProps, "children"> & {
   name: string;
   options: { value: string; label: string }[];
@@ -102,6 +130,9 @@ export function SelectField({ name, options, placeholder, defaultValue, ...field
     <Field {...field}>
       {({ id, describedBy, invalid }) => (
         <select
+          // React resets a form after its action runs, and a reset select falls back to the value it
+          // was first rendered with. Remounting when the value changes keeps the farmer's choice.
+          key={defaultValue ?? ""}
           id={id}
           name={name}
           defaultValue={defaultValue ?? ""}

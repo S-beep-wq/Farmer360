@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.2 |
+| **Version** | 0.3 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -264,6 +264,18 @@ Oilseeds
 
 Crop data should not be hard-coded throughout the application.
 
+### Implemented (v0.3)
+
+- Added `name_hi` (required): the Hindi name shown in the Hindi-first interface. Crop names come
+  from this table, not from the app's message files.
+- `category` is one of `cereal`, `pulse`, `oilseed`, `vegetable`, `cash`, `other`.
+- Starter list (in the migration): Rice (paddy), Wheat, Maize, Lentil, Chickpea, Pigeon pea,
+  Green gram, Mustard, Potato, Onion, Tomato, Cauliflower, Brinjal, Okra, Sugarcane, Jute —
+  **names only**. The agronomic columns (`season`, `typical_duration_days`, water and labour
+  requirements) stay empty until filled from a verified source; the app does not estimate
+  durations or harvest dates.
+- Read-only for signed-in users; no access for signed-out visitors. Changes are made by migration.
+
 ## 7. `crop_varieties`
 
 Stores variety-specific information.
@@ -283,6 +295,12 @@ updated_at
 ```
 
 Only verified/appropriate sources should be used when adding agronomic information.
+
+**Not created yet (v0.3).** There is no verified variety data for the pilot district, so an empty
+table would only invite invented data. Instead, `crop_cycles.variety_name` stores the variety
+as the farmer names it (for example, from the seed packet). When verified variety data exists,
+create this table and add a nullable `crop_cycles.variety_id`, keeping `variety_name` for
+varieties not in the list.
 
 ## 8. `crop_cycles`
 
@@ -324,6 +342,32 @@ plot 1 → many crop_cycles
 ```
 
 Historical crop cycles must not be deleted simply because a new crop is planted.
+
+### Implemented (v0.3)
+
+Differences from the field list above:
+
+- `variety_name` (text, optional) instead of `variety_id` — see section 7.
+- `season`: `kharif`, `rabi` or `zaid`, chosen by the farmer.
+
+Rules enforced in the database:
+
+- At least one of `planned_sowing_date` / `actual_sowing_date` is set.
+- `PLANNED` has no `actual_sowing_date`; `ACTIVE`, `HARVESTED` and `COMPLETED` must have one;
+  `CANCELLED` may have either.
+- `expected_harvest_date` is on or after the (actual, else planned) sowing date;
+  `actual_harvest_date` is on or after `actual_sowing_date`.
+- `crop_id` must exist in `crop_catalog`.
+
+How the app creates a cycle: the farmer answers "Has it been sown already?". "No" stores a
+`planned_sowing_date` with status `PLANNED`; "Yes" stores an `actual_sowing_date` (not in the
+future, by the farmer's date in India) with status `ACTIVE`. This lets farmers who join mid-season
+record crops already in the field. `expected_harvest_date` is optional and entered by the farmer.
+
+Access: `public.owns_plot(plot_id)` checks that the plot is on one of the signed-in farmer's
+farms; select, insert and update policies use it, so a cycle cannot be read, added or moved onto
+another farmer's plot. There is no delete: a crop that is not grown should be `CANCELLED`.
+Status changes (sown, harvested, cancelled) are not built yet.
 
 ## 9. `crop_activities`
 
@@ -789,6 +833,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | Migration | Contents |
 |---|---|
 | `20261003044516_slice1_farmers_farms_plots.sql` | PostGIS; `farmers`, `farms`, `plots` with location/boundary; triggers; RLS. |
+| `20261003052122_slice3_crop_catalog_and_cycles.sql` | `crop_catalog` (+ starter list), `crop_cycles`, `owns_plot()`; RLS. |
 
 
 Database migrations must be version-controlled.

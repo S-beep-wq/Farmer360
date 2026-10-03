@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { TEST_PHONES } from "../support/supabase";
 
-import { logIn, tapMap } from "./helpers";
+import { logInWithProfile, tapMap } from "./helpers";
 
 // Editing a farm and a plot (location, boundary and details). Uses its own farmer, created
 // fresh by global-setup, so it does not depend on the other spec files.
@@ -10,17 +10,7 @@ import { logIn, tapMap } from "./helpers";
 test.describe.configure({ mode: "serial" });
 
 async function signIn(page: Page) {
-  await logIn(page, TEST_PHONES.e2eEdit);
-  // First login of this farmer: complete the profile.
-  await page.waitForURL(/\/(onboarding|farms)$/);
-  if (page.url().endsWith("/onboarding")) {
-    await page.getByLabel("Your name").fill("Sita Devi");
-    await page.getByText("English", { exact: true }).click();
-    await page.getByLabel("District").fill("Nalanda");
-    await page.getByLabel("Village").fill("Rajgir");
-    await page.getByRole("button", { name: "Continue" }).click();
-  }
-  await expect(page).toHaveURL(/\/farms$/);
+  await logInWithProfile(page, TEST_PHONES.e2eEdit, { name: "Sita Devi", district: "Nalanda", village: "Rajgir" });
 }
 
 test("setup: a farm with a plot that has a phone location and a boundary", async ({ page }) => {
@@ -61,8 +51,13 @@ test("a farmer changes their farm's details", async ({ page }) => {
   await expect(page.getByRole("radio", { name: "No", exact: true })).toBeChecked();
 
   await page.getByLabel("Farm name").fill("");
+  await page.getByLabel(/Soil type/).selectOption("clay");
+  await page.getByLabel("Unit").selectOption("hectare");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Please fill this in.")).toBeVisible();
+  // Choices made before the error are kept.
+  await expect(page.getByLabel(/Soil type/)).toHaveValue("clay");
+  await expect(page.getByLabel("Unit")).toHaveValue("hectare");
 
   await page.getByLabel("Farm name").fill("Farm by the road");
   await page.getByText("Yes", { exact: true }).click();
