@@ -45,6 +45,13 @@ export default async function FarmsPage() {
           </LinkButton>
         </>
       )}
+
+      <Link
+        href="/profile"
+        className="mt-4 flex min-h-12 w-fit items-center rounded-lg px-1 text-lg font-medium text-green-800 underline underline-offset-4 focus:outline-none focus:ring-4 focus:ring-green-300"
+      >
+        {t.account.profileLink}
+      </Link>
     </Page>
   );
 }

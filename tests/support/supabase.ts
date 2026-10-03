@@ -19,6 +19,7 @@ export const TEST_PHONES = {
   e2eHarvest: "+919999900009",
   e2eSeason: "+919999900010",
   e2eHealth: "+919999900011",
+  e2eDelete: "+919999900012",
 } as const;
 
 function env(name: string): string {
@@ -46,8 +47,8 @@ export function anonClient(): SupabaseClient<Database> {
   });
 }
 
-/** Admin client for test cleanup only. Never used by the application. */
-function adminClient() {
+/** Admin client for test cleanup and checks only. Never used by the application. */
+export function adminClient() {
   return createClient(supabaseUrl(), env("SUPABASE_SECRET_KEY"), {
     auth: { persistSession: false, autoRefreshToken: false },
   });

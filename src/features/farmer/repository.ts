@@ -5,7 +5,7 @@ import type { FarmerProfileInput } from "./schema";
 
 // Data access for `farmers`. Row Level Security limits every query to the signed-in user's own row.
 
-const FARMER_COLUMNS = "id, full_name, phone, preferred_language, state, district, village";
+const FARMER_COLUMNS = "id, full_name, phone, preferred_language, state, district, village, deletion_requested_at";
 
 export async function getFarmerForUser(supabase: ServerSupabaseClient, userId: string) {
   const { data, error } = await supabase

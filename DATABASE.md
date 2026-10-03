@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.8 |
+| **Version** | 0.9 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -85,6 +85,7 @@ preferred_language
 state
 district
 village
+deletion_requested_at
 created_at
 updated_at
 ```
@@ -97,6 +98,28 @@ Rules:
 - A farmer must only access their own profile.
 - `user_id` defaults to `auth.uid()`, and a trigger copies `phone` from the verified login
   (`auth.users.phone`). Neither can be set or changed by the client.
+
+### Account deletion (v0.9)
+
+A farmer can delete their account from their profile. Everything goes: the auth user, every row of
+farmer data (by `ON DELETE CASCADE` from `auth.users`) and every crop photo file in storage. Files
+in Supabase Storage cannot be removed with SQL, so deletion has two steps, both under the farmer's
+own session (the app never uses the secret key):
+
+1. **Request.** The farmer sets `deletion_requested_at`. A trigger (`farmers_deletion_request`)
+   stamps it with `now()` and makes it one-way: it cannot be set on insert, backdated or cleared.
+   While it is set, the app sends the farmer to "finish deleting your account" instead of their
+   farms, because some photos may already be gone.
+2. **Remove photos.** `public.account_photo_paths()` lists every file under
+   `crop-photos/{farmer_id}/`. Two storage policies let the farmer see and delete files in their
+   own top-level folder, **only after a request** (`public.account_deletion_requested()`). Before
+   that, photos stay read-only (section 11).
+3. **Delete.** `public.delete_my_account()` (security definer) deletes `auth.users` for
+   `auth.uid()`. It refuses unless deletion was requested (or there is no farmer profile at all)
+   and no photo files are left, so a failed photo removal can never leave orphaned files.
+
+Every step can be run again after a failure. Covered by
+`tests/integration/account-deletion.test.ts` and `tests/e2e/account-deletion.spec.ts`.
 
 ## 4. `farms`
 
@@ -529,8 +552,8 @@ The database stores metadata and the storage reference.
 - In the browser, photos are made smaller (at most 1600 px, JPEG) before upload, which also drops
   their EXIF metadata such as GPS. The server checks the file's first bytes to confirm it is a
   real JPEG, PNG or WebP image. `captured_at` is not filled yet.
-- Deleting an account removes the database rows (cascade) but not the files in storage; cleaning
-  up storage on account deletion is still to be done.
+- Deleting an account (v0.9, section 3) removes the farmer's photo files from storage first, then
+  the database rows (cascade). Only then, and only for their own folder, may a farmer delete files.
 
 ## 12. `expenses`
 
@@ -911,6 +934,9 @@ policies. A trigger keeps each entry on its crop cycle and blocks changes once t
 `COMPLETED`; entries can still be added to a `CANCELLED` crop, because money spent on a lost crop
 is real.
 
+Deleting a whole account is the one exception: a farmer who asks for it loses everything,
+permanently (section 3, "Account deletion").
+
 ## 25. Indexing
 
 Indexes should initially cover common access patterns such as:
@@ -960,7 +986,8 @@ Implemented in v0.2 for `farmers`, `farms` and `plots`:
 - Plot policies check that the plot's farm belongs to the signed-in farmer, for reads, inserts
   and updates (so a plot cannot be moved onto someone else's farm).
 - There are **no DELETE policies** and `DELETE` is revoked: history is preserved (section 24).
-  Deleting an auth user (account removal) cascades to their farmer data.
+  Deleting an auth user (account removal, section 3) cascades to their farmer data. A farmer can
+  delete only their own user, through `public.delete_my_account()`.
 - The application only ever uses the publishable key with the farmer's session. The secret key is
   used only by local tests for cleanup.
 
@@ -995,6 +1022,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003062409_slice6_harvests_and_sales.sql` | `harvests`, `sales` (generated amounts, oversell check), `owns_harvest()`; RLS. |
 | `20261003064819_slice7_season_review.sql` | `crop_cycles.completed_at`; payment updates after closing; `crop_cycle_totals` view. |
 | `20261003073427_slice8_crop_observations.sql` | `crop_observations` (column grants), `crop_photos`, `crop-photos` bucket and storage policies. |
+| `20261003075538_slice9_account_deletion.sql` | `farmers.deletion_requested_at`; request-gated photo delete policies; `account_photo_paths()`, `delete_my_account()`. |
 
 
 Database migrations must be version-controlled.

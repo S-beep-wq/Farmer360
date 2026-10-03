@@ -139,13 +139,13 @@ isOneToOne: false
                   ]
                 },"farmers": {
                   Row: {
-                    "created_at": string,"district": string,"full_name": string,"id": string,"phone": string | null,"preferred_language": string,"state": string,"updated_at": string,"user_id": string,"village": string
+                    "created_at": string,"deletion_requested_at": string | null,"district": string,"full_name": string,"id": string,"phone": string | null,"preferred_language": string,"state": string,"updated_at": string,"user_id": string,"village": string
                   }
                   Insert: {
-                    "created_at"?: string,"district": string,"full_name": string,"id"?: string,"phone"?: string | null,"preferred_language"?: string,"state": string,"updated_at"?: string,"user_id"?: string,"village": string
+                    "created_at"?: string,"deletion_requested_at"?: string | null,"district": string,"full_name": string,"id"?: string,"phone"?: string | null,"preferred_language"?: string,"state": string,"updated_at"?: string,"user_id"?: string,"village": string
                   }
                   Update: {
-                    "created_at"?: string,"district"?: string,"full_name"?: string,"id"?: string,"phone"?: string | null,"preferred_language"?: string,"state"?: string,"updated_at"?: string,"user_id"?: string,"village"?: string
+                    "created_at"?: string,"deletion_requested_at"?: string | null,"district"?: string,"full_name"?: string,"id"?: string,"phone"?: string | null,"preferred_language"?: string,"state"?: string,"updated_at"?: string,"user_id"?: string,"village"?: string
                   }
                   Relationships: [
                     
@@ -251,7 +251,13 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "boundary_geojson":
+            "account_deletion_requested":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"account_photo_paths":
+{ Args: Record<PropertyKey, never>; Returns: string[]
+                           },
+"boundary_geojson":
 { Args: { "p": Database["public"]['Tables']["plots"]['Row'] }; Returns: Json
                            },
 "crop_photo_path_owned":
@@ -259,6 +265,9 @@ isOneToOne: false
                            },
 "current_farmer_id":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"delete_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "harvest_sold_kg":
 { Args: { "p_except_sale_id"?: string,"p_harvest_id": string }; Returns: number

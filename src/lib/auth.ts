@@ -30,13 +30,19 @@ export async function requireUser(): Promise<CurrentUser> {
   return user;
 }
 
-/** The signed-in farmer's profile. Sends the user to onboarding if they have none yet. */
+/**
+ * The signed-in farmer's profile. Sends the user to onboarding if they have none yet, and to
+ * finish deleting their account if that was started but did not complete.
+ */
 export const requireFarmer = cache(async () => {
   const user = await requireUser();
   const supabase = await createClient();
   const farmer = await getFarmerForUser(supabase, user.id);
   if (!farmer) {
     redirect("/onboarding");
+  }
+  if (farmer.deletion_requested_at) {
+    redirect("/profile/delete");
   }
   return farmer;
 });

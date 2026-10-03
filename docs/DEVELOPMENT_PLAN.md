@@ -113,13 +113,26 @@ monitoring (sections 8–9), buyer discovery (section 14) and scheme/insurance i
 AI analysis of photos (USER_WORKFLOWS.md section 8, "if enabled") is not built: the columns are
 ready and protected, but choosing and validating an AI service is a separate decision.
 
+## Slice 9 — Account deletion with photo cleanup ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `farmers.deletion_requested_at` (one-way), photo delete only after a request, `delete_my_account()` | ✅ |
+| Profile page (name, mobile, village, district, state, language), linked from "My farms" | ✅ |
+| "Delete my account": what is deleted, cannot be undone, tick to confirm, "Keep my account" | ✅ |
+| Removes all photo files from storage, then the user and all farmer data; signs out | ✅ |
+| A deletion that fails midway is finished on the next visit; the same number can start again | ✅ |
+| Unit, integration (incl. storage and other farmers) and end-to-end tests | ✅ |
+
+Editing the profile (name, village, district) is not part of this slice.
+
 ## Next slices (proposed, not started)
 
 1. Government scheme / insurance information (sections 10–11) — needs verified source data.
 2. Buyer discovery (section 14) — the marketplace `buyers` table.
 3. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
    a confidence/uncertainty design and field validation.
-4. Account deletion that also removes the farmer's photos from storage.
+4. Editing the farmer profile (name, village, district).
 
 ## Open questions for the product owner
 
@@ -138,4 +151,6 @@ ready and protected, but choosing and validating an AI service is a separate dec
 - Should vegetables be recorded in pieces or crates as well as kg/quintal? Today only weight units
   are supported, so sales can be checked against the harvest.
 - Should a sale record how much money has been received so far (for "partly paid")?
+- Account deletion is immediate and permanent. Should there be a waiting period (for example,
+  7 days to change one's mind), or an export of the farmer's records before deleting?
 - Hindi wording should be reviewed by a native speaker from the pilot area.
