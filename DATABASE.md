@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.12 |
+| **Version** | 0.13 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -851,7 +851,7 @@ The source and verification date are mandatory for trusted scheme information.
 - `scheme_crops` (`scheme_id`, `crop_id`) replaces `applicable_crops`; none means any crop.
 - RLS: signed-in users read `PUBLISHED` schemes only; nobody writes through the API.
 - The team loads and updates schemes with `public.import_scheme(jsonb)` (service role only; run by
-  `scripts/import-schemes.mjs`). It validates everything and saves a scheme with its texts and
+  `scripts/import-official-data.mjs schemes`). It validates everything and saves a scheme with its texts and
   crops in one step. See `docs/SCHEMES.md` for the format, the rules and how matching works.
 - No scheme data ships with the app: it must be checked against official sources first.
 
@@ -882,7 +882,22 @@ updated_at
 
 Insurance information must be traceable to authoritative sources.
 
-**Not created yet (v0.12).**
+### Implemented (v0.13)
+
+Same pattern as `government_schemes` (section 17):
+
+- `insurance_products`: `slug`, `provider`, `state` (null: all of India), `districts`, `seasons`
+  (empty: any), `enrollment_deadline`, `official_url`, `source_name`, `source_url` (https,
+  required), `last_verified_at` (required), `status` (`PUBLISHED`/`ARCHIVED`).
+- `insurance_texts` per language (`hi` and `en` both required): `name`, `summary`, `eligibility`,
+  `coverage` (= `coverage_information`), `premium` (= `premium_information`), `important_dates`
+  (optional), `claim_process`.
+- `insurance_crops` (`product_id`, `crop_id`) replaces the single `crop_id`; at least one crop is
+  required.
+- RLS: signed-in users read published products only; nobody writes through the API. The team
+  loads them with `public.import_insurance_product(jsonb)` (service role only), run by
+  `scripts/import-official-data.mjs insurance`. See `docs/INSURANCE.md`.
+- No insurance data ships with the app. The app never promises a claim outcome.
 
 ## 19. `scheme_applications`
 
@@ -1099,6 +1114,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003082222_slice10_farmer_profile_editing.sql` | Column-level `UPDATE` grant on `farmers` (profile fields only). |
 | `20261003090045_slice11_buyer_discovery.sql` | `buyers`, `buyer_demands`, `demand_interests`; one role per login; `demand_interested_farmers()`; RLS. |
 | `20261003092520_slice12_government_schemes.sql` | `government_schemes`, `scheme_texts`, `scheme_crops`; `import_scheme()` (service role); read-only RLS. |
+| `20261003094055_slice13_crop_insurance.sql` | `insurance_products`, `insurance_texts`, `insurance_crops`; `import_insurance_product()` (service role); read-only RLS. |
 
 
 Database migrations must be version-controlled.

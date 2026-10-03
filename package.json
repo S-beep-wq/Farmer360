@@ -16,7 +16,8 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts",
-    "schemes:import": "node --env-file=.env.local scripts/import-schemes.mjs"
+    "schemes:import": "node --env-file=.env.local scripts/import-official-data.mjs schemes",
+    "insurance:import": "node --env-file=.env.local scripts/import-official-data.mjs insurance"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

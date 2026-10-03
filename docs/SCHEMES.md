@@ -56,7 +56,7 @@ A JSON array of schemes. Example with placeholders (not a real scheme):
 | `slug` | Stable id (lowercase words with hyphens). Importing the same slug again updates the scheme. |
 | `state` | `null` for a scheme across India; otherwise the state's name as farmers write it in their profile. |
 | `districts` | Empty for the whole state; otherwise the districts it applies to. Needs a `state`. |
-| `crops` | English crop names from the crop catalog (e.g. `"Wheat"`). Empty: any crop. |
+| `crops` | English crop names exactly as in the crop catalog (e.g. `"Wheat"`, `"Lentil (masoor)"`). Empty: any crop. |
 | `seasons` | `kharif`, `rabi`, `zaid`. Empty: any season. |
 | `application_deadline` | `YYYY-MM-DD`, or `null` when no deadline is announced. |
 | `official_url` | Where to apply (optional, https). |
@@ -74,7 +74,8 @@ your area" (schemes for other states or districts are not shown):
 ## Loading
 
 ```bash
-node --env-file=.env.local scripts/import-schemes.mjs schemes.json
+npm run schemes:import -- schemes.json
+# same as: node --env-file=.env.local scripts/import-official-data.mjs schemes schemes.json
 ```
 
 The script needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` for the project you are

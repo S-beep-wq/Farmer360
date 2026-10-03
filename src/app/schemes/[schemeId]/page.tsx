@@ -1,31 +1,23 @@
 import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
 
 import { Card, Page, PageTitle } from "@/components/ui/layout";
-import { formatDate, todayInIndia } from "@/features/crops/dates";
+import { todayInIndia } from "@/features/crops/dates";
 import { deadlineText, matchReasons } from "@/features/schemes/format";
 import { getScheme, listCurrentCrops } from "@/features/schemes/repository";
 import { isStale, matchScheme } from "@/features/schemes/rules";
+import {
+  CautionNote,
+  OfficialLinkButton,
+  OfficialSection as Section,
+  OfficialText as Official,
+  SourceFooter,
+  StaleNote,
+} from "@/features/shared/components/OfficialInfo";
 import { requireFarmer } from "@/lib/auth";
-import { format } from "@/lib/i18n";
 import { getServerMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-xl font-semibold text-stone-900">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-/** Text from the official source, keeping its line breaks. */
-function Official({ text }: { text: string }) {
-  return <p className="whitespace-pre-line text-lg text-stone-800">{text}</p>;
-}
 
 export default async function SchemePage({ params }: PageProps<"/schemes/[schemeId]">) {
   const farmer = await requireFarmer();
@@ -57,14 +49,8 @@ export default async function SchemePage({ params }: PageProps<"/schemes/[scheme
           ))}
         </ul>
       ) : null}
-      <p className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4 text-lg text-amber-900" data-testid="eligibility-note">
-        {t.schemes.notEligibility}
-      </p>
-      {isStale(scheme.last_verified_at, today) ? (
-        <p role="status" className="rounded-xl border-2 border-red-200 bg-red-50 p-4 text-lg text-red-900" data-testid="stale-note">
-          {t.schemes.stale}
-        </p>
-      ) : null}
+      <CautionNote>{t.schemes.notEligibility}</CautionNote>
+      {isStale(scheme.last_verified_at, today) ? <StaleNote t={t} /> : null}
 
       <Card>
         <div className="flex flex-col gap-6">
@@ -97,23 +83,8 @@ export default async function SchemePage({ params }: PageProps<"/schemes/[scheme
         </div>
       </Card>
 
-      {scheme.official_url ? (
-        <a
-          href={scheme.official_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex min-h-14 items-center justify-center rounded-xl bg-green-700 px-6 text-xl font-semibold text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300"
-        >
-          {t.schemes.officialLink} ↗
-        </a>
-      ) : null}
-
-      <footer className="flex flex-col gap-1 border-t-2 border-stone-200 pt-4 text-base text-stone-700" data-testid="scheme-source">
-        <a href={scheme.source_url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
-          {format(t.schemes.source, { source: scheme.source_name })}
-        </a>
-        <span>{format(t.schemes.checkedOn, { date: formatDate(scheme.last_verified_at, locale) })}</span>
-      </footer>
+      {scheme.official_url ? <OfficialLinkButton href={scheme.official_url} label={t.schemes.officialLink} /> : null}
+      <SourceFooter t={t} locale={locale} sourceName={scheme.source_name} sourceUrl={scheme.source_url} lastVerifiedAt={scheme.last_verified_at} />
     </Page>
   );
 }

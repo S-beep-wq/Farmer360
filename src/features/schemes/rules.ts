@@ -1,8 +1,9 @@
+import { areaFor, type FarmerPlace } from "@/features/shared/official-data";
+
 // Matching official scheme information to a farmer (USER_WORKFLOWS.md section 10). This only says
 // a scheme MAY be relevant; it never decides eligibility (PRODUCT_SPEC.md section 12).
 
-/** Scheme information checked longer ago than this is flagged as possibly out of date. */
-export const STALE_AFTER_DAYS = 180;
+export { isStale, STALE_AFTER_DAYS, type FarmerPlace } from "@/features/shared/official-data";
 
 export type SchemeScope = {
   state: string | null;
@@ -12,7 +13,6 @@ export type SchemeScope = {
   application_deadline: string | null;
 };
 
-export type FarmerPlace = { state: string; district: string };
 export type CurrentCrop = { crop_id: string; season: string };
 
 export type SchemeMatch = {
@@ -25,13 +25,8 @@ export type SchemeMatch = {
   deadlinePassed: boolean;
 };
 
-const same = (a: string, b: string) => a.trim().toLocaleLowerCase("en-IN") === b.trim().toLocaleLowerCase("en-IN");
-
 export function schemeArea(scheme: Pick<SchemeScope, "state" | "districts">, farmer: FarmerPlace): SchemeMatch["area"] {
-  if (scheme.state === null) return "india";
-  if (!same(scheme.state, farmer.state)) return null;
-  if (scheme.districts.length === 0) return "state";
-  return scheme.districts.some((d) => same(d, farmer.district)) ? "district" : null;
+  return areaFor(scheme, farmer);
 }
 
 export function matchScheme(scheme: SchemeScope, farmer: FarmerPlace, crops: CurrentCrop[], today: string): SchemeMatch {
@@ -53,15 +48,6 @@ export function matchScheme(scheme: SchemeScope, farmer: FarmerPlace, crops: Cur
 /** May be relevant: for the farmer's area, for one of their crops (or any crop), and still open. */
 export function mayBeRelevant(match: SchemeMatch): boolean {
   return match.area !== null && !match.cropMismatch && !match.deadlinePassed;
-}
-
-/** Days between two ISO dates (b − a). */
-export function daysBetween(a: string, b: string): number {
-  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
-}
-
-export function isStale(lastVerifiedAt: string, today: string): boolean {
-  return daysBetween(lastVerifiedAt, today) > STALE_AFTER_DAYS;
 }
 
 /** Soonest deadline first; schemes without a deadline after those with one. */

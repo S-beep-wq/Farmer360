@@ -154,7 +154,7 @@ ready and protected, but choosing and validating an AI service is a separate dec
 | Task | Status |
 |---|---|
 | Migration: `government_schemes`, `scheme_texts` (Hindi + English), `scheme_crops`, read-only RLS | ✅ |
-| `import_scheme()` (service role) and `scripts/import-schemes.mjs` for the team; `docs/SCHEMES.md` | ✅ |
+| `import_scheme()` (service role) and `scripts/import-schemes.mjs` (now `import-official-data.mjs`) for the team; `docs/SCHEMES.md` | ✅ |
 | Source and check date required; schemes checked more than 6 months ago are flagged | ✅ |
 | Matching by state/district, the farmer's current crops and seasons, and deadline | ✅ |
 | "May be relevant for you" with reasons, "Other schemes in your area"; never claims eligibility | ✅ |
@@ -165,10 +165,25 @@ ready and protected, but choosing and validating an AI service is a separate dec
 checked by the team (docs/SCHEMES.md); until then farmers see "No scheme information is
 available yet".
 
+## Slice 13 — Crop insurance information ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `insurance_products`, `insurance_texts` (Hindi + English), `insurance_crops`, read-only RLS | ✅ |
+| `import_insurance_product()` (service role); `scripts/import-official-data.mjs` for schemes and insurance; `docs/INSURANCE.md` | ✅ |
+| "Crop insurance for this crop" on a planned, growing or harvested crop: matched by crop, season and place | ✅ |
+| Details: eligibility, coverage, premium, dates, how to report a claim, official link, source, check date | ✅ |
+| Never promises a claim; enrolment closed and out-of-date information are flagged | ✅ |
+| Shared rules and page parts for official information (schemes and insurance) | ✅ |
+| Unit, integration and end-to-end tests | ✅ |
+
+**No real insurance information is loaded**, for the same reason as schemes (docs/INSURANCE.md).
+
 ## Next slices (proposed, not started)
 
-1. Crop insurance information (USER_WORKFLOWS.md section 11) — same pattern as schemes
-   (`insurance_products`), shown per crop cycle; needs verified source data.
+1. Crop planning: compare candidate crops for a plot and season (USER_WORKFLOWS.md section 5), first
+   from the farmer's own past seasons on that plot; cost/revenue estimates need verified
+   reference data for the pilot district.
 2. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
    a confidence/uncertainty design and field validation.
 
@@ -189,6 +204,8 @@ available yet".
 - Should vegetables be recorded in pieces or crates as well as kg/quintal? Today only weight units
   are supported, so sales can be checked against the harvest.
 - Should a sale record how much money has been received so far (for "partly paid")?
+- Which crop insurance information applies in the pilot district (crops, seasons, enrolment
+  dates, claim reporting), and who checks it each season?
 - Which schemes should be loaded for the pilot district, and who in the team checks and re-checks
   them (at least every 6 months)?
 - Buyer verification is done by the team directly in the database. Who verifies buyers, how

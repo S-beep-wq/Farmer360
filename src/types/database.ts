@@ -270,6 +270,63 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"insurance_crops": {
+                  Row: {
+                    "crop_id": string,"product_id": string
+                  }
+                  Insert: {
+                    "crop_id": string,"product_id": string
+                  }
+                  Update: {
+                    "crop_id"?: string,"product_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "insurance_crops_crop_id_fkey"
+      columns: ["crop_id"]
+isOneToOne: false
+      referencedRelation: "crop_catalog"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "insurance_crops_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "insurance_products"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"insurance_products": {
+                  Row: {
+                    "created_at": string,"districts": (string)[],"enrollment_deadline": string | null,"id": string,"last_verified_at": string,"official_url": string | null,"provider": string,"seasons": (string)[],"slug": string,"source_name": string,"source_url": string,"state": string | null,"status": string,"updated_at": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"districts"?: (string)[],"enrollment_deadline"?: string | null,"id"?: string,"last_verified_at": string,"official_url"?: string | null,"provider": string,"seasons"?: (string)[],"slug": string,"source_name": string,"source_url": string,"state"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"districts"?: (string)[],"enrollment_deadline"?: string | null,"id"?: string,"last_verified_at"?: string,"official_url"?: string | null,"provider"?: string,"seasons"?: (string)[],"slug"?: string,"source_name"?: string,"source_url"?: string,"state"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"insurance_texts": {
+                  Row: {
+                    "claim_process": string,"coverage": string,"eligibility": string,"important_dates": string | null,"locale": string,"name": string,"premium": string,"product_id": string,"summary": string
+                  }
+                  Insert: {
+                    "claim_process": string,"coverage": string,"eligibility": string,"important_dates"?: string | null,"locale": string,"name": string,"premium": string,"product_id": string,"summary": string
+                  }
+                  Update: {
+                    "claim_process"?: string,"coverage"?: string,"eligibility"?: string,"important_dates"?: string | null,"locale"?: string,"name"?: string,"premium"?: string,"product_id"?: string,"summary"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "insurance_texts_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "insurance_products"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"plots": {
                   Row: {
                     "area": number | null,"area_unit": string | null,"boundary": unknown,"boundary_area_sq_m": number | null,"created_at": string,"farm_id": string,"id": string,"irrigation_available": boolean | null,"irrigation_type": string | null,"latitude": number | null,"location_accuracy_m": number | null,"location_source": string | null,"longitude": number | null,"name": string,"notes": string | null,"soil_ph": number | null,"soil_source": string | null,"soil_type": string | null,"updated_at": string,"boundary_geojson": Json | null
@@ -399,6 +456,9 @@ isOneToOne: false
                            },
 "harvest_sold_kg":
 { Args: { "p_except_sale_id"?: string,"p_harvest_id": string }; Returns: number
+                           },
+"import_insurance_product":
+{ Args: { "p": Json }; Returns: string
                            },
 "import_scheme":
 { Args: { "p": Json }; Returns: string

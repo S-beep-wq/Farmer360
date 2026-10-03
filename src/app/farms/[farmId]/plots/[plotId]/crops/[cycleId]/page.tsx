@@ -105,6 +105,12 @@ export default async function CropCyclePage({ params }: PageProps<"/farms/[farmI
         />
       ) : null}
       <SpentSoFar t={t} locale={locale} {...spent} />
+      {/* Crop cycle → insurance information (USER_WORKFLOWS.md section 11). */}
+      {cycle.status === "PLANNED" || cycle.status === "ACTIVE" || cycle.status === "HARVESTED" ? (
+        <LinkButton href={`${cropHref}/insurance`} variant="secondary">
+          {t.insurance.link}
+        </LinkButton>
+      ) : null}
       {/* Harvest → search buyers (USER_WORKFLOWS.md section 14). */}
       {cycle.status === "ACTIVE" || cycle.status === "HARVESTED" ? (
         <LinkButton href={`/market?crop=${cycle.crop.id}`} variant="secondary">
