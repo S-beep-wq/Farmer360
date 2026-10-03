@@ -149,9 +149,26 @@ ready and protected, but choosing and validating an AI service is a separate dec
 | Links from "My farms" and from a crop in the field or harvested; buyer profile, edit and deletion | ✅ |
 | Unit, integration (roles, privacy, filters) and end-to-end tests | ✅ |
 
+## Slice 12 — Government scheme information ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `government_schemes`, `scheme_texts` (Hindi + English), `scheme_crops`, read-only RLS | ✅ |
+| `import_scheme()` (service role) and `scripts/import-schemes.mjs` for the team; `docs/SCHEMES.md` | ✅ |
+| Source and check date required; schemes checked more than 6 months ago are flagged | ✅ |
+| Matching by state/district, the farmer's current crops and seasons, and deadline | ✅ |
+| "May be relevant for you" with reasons, "Other schemes in your area"; never claims eligibility | ✅ |
+| Scheme page: eligibility (official rules), benefit, documents, how to apply, deadline, official link, source | ✅ |
+| Unit, integration (loading, validation, access) and end-to-end tests | ✅ |
+
+**No real scheme information is loaded.** It has to be collected from official sources and
+checked by the team (docs/SCHEMES.md); until then farmers see "No scheme information is
+available yet".
+
 ## Next slices (proposed, not started)
 
-1. Government scheme / insurance information (sections 10–11) — needs verified source data.
+1. Crop insurance information (USER_WORKFLOWS.md section 11) — same pattern as schemes
+   (`insurance_products`), shown per crop cycle; needs verified source data.
 2. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
    a confidence/uncertainty design and field validation.
 
@@ -172,6 +189,8 @@ ready and protected, but choosing and validating an AI service is a separate dec
 - Should vegetables be recorded in pieces or crates as well as kg/quintal? Today only weight units
   are supported, so sales can be checked against the harvest.
 - Should a sale record how much money has been received so far (for "partly paid")?
+- Which schemes should be loaded for the pilot district, and who in the team checks and re-checks
+  them (at least every 6 months)?
 - Buyer verification is done by the team directly in the database. Who verifies buyers, how
   (documents, visit), and is an admin screen needed?
 - Should demand carry an offered price? The spec's buyer fields do not include one, so it is not

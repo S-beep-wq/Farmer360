@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.11 |
+| **Version** | 0.12 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -838,6 +838,23 @@ updated_at
 
 The source and verification date are mandatory for trusted scheme information.
 
+### Implemented (v0.12)
+
+- `government_schemes`: `slug` (stable key for updates), `department`, `state` (null: all of
+  India), `districts` (empty: the whole state; needs a state), `seasons` (`kharif`, `rabi`,
+  `zaid`; empty: any), `application_deadline` (null: none announced), `official_url`,
+  `source_name`, `source_url` (https, required), `last_verified_at` (required, not in the future),
+  `status` (`PUBLISHED` or `ARCHIVED`). `name`, `description`, `eligibility`, `benefit`,
+  `required_documents` and `application_process` are per language in `scheme_texts`.
+- `scheme_texts` (`scheme_id`, `locale` `hi`/`en`, `name`, `summary`, `eligibility`, `benefit`,
+  `required_documents text[]`, `how_to_apply`): both languages are required.
+- `scheme_crops` (`scheme_id`, `crop_id`) replaces `applicable_crops`; none means any crop.
+- RLS: signed-in users read `PUBLISHED` schemes only; nobody writes through the API.
+- The team loads and updates schemes with `public.import_scheme(jsonb)` (service role only; run by
+  `scripts/import-schemes.mjs`). It validates everything and saves a scheme with its texts and
+  crops in one step. See `docs/SCHEMES.md` for the format, the rules and how matching works.
+- No scheme data ships with the app: it must be checked against official sources first.
+
 ## 18. `insurance_products`
 
 Stores structured insurance information.
@@ -864,6 +881,8 @@ updated_at
 ```
 
 Insurance information must be traceable to authoritative sources.
+
+**Not created yet (v0.12).**
 
 ## 19. `scheme_applications`
 
@@ -1079,6 +1098,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003075538_slice9_account_deletion.sql` | `farmers.deletion_requested_at`; request-gated photo delete policies; `account_photo_paths()`, `delete_my_account()`. |
 | `20261003082222_slice10_farmer_profile_editing.sql` | Column-level `UPDATE` grant on `farmers` (profile fields only). |
 | `20261003090045_slice11_buyer_discovery.sql` | `buyers`, `buyer_demands`, `demand_interests`; one role per login; `demand_interested_farmers()`; RLS. |
+| `20261003092520_slice12_government_schemes.sql` | `government_schemes`, `scheme_texts`, `scheme_crops`; `import_scheme()` (service role); read-only RLS. |
 
 
 Database migrations must be version-controlled.

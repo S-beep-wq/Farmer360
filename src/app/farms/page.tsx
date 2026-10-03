@@ -49,6 +49,9 @@ export default async function FarmsPage() {
       <LinkButton href="/market" variant="secondary">
         {t.market.link}
       </LinkButton>
+      <LinkButton href="/schemes" variant="secondary">
+        {t.schemes.link}
+      </LinkButton>
 
       <Link
         href="/profile"

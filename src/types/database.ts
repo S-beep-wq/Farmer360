@@ -232,6 +232,19 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"government_schemes": {
+                  Row: {
+                    "application_deadline": string | null,"created_at": string,"department": string,"districts": (string)[],"id": string,"last_verified_at": string,"official_url": string | null,"seasons": (string)[],"slug": string,"source_name": string,"source_url": string,"state": string | null,"status": string,"updated_at": string
+                  }
+                  Insert: {
+                    "application_deadline"?: string | null,"created_at"?: string,"department": string,"districts"?: (string)[],"id"?: string,"last_verified_at": string,"official_url"?: string | null,"seasons"?: (string)[],"slug": string,"source_name": string,"source_url": string,"state"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "application_deadline"?: string | null,"created_at"?: string,"department"?: string,"districts"?: (string)[],"id"?: string,"last_verified_at"?: string,"official_url"?: string | null,"seasons"?: (string)[],"slug"?: string,"source_name"?: string,"source_url"?: string,"state"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"harvests": {
                   Row: {
                     "created_at": string,"crop_cycle_id": string,"deleted_at": string | null,"harvest_date": string,"id": string,"notes": string | null,"quality_grade": string | null,"quantity": number,"quantity_unit": string,"updated_at": string
@@ -295,6 +308,50 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"scheme_crops": {
+                  Row: {
+                    "crop_id": string,"scheme_id": string
+                  }
+                  Insert: {
+                    "crop_id": string,"scheme_id": string
+                  }
+                  Update: {
+                    "crop_id"?: string,"scheme_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "scheme_crops_crop_id_fkey"
+      columns: ["crop_id"]
+isOneToOne: false
+      referencedRelation: "crop_catalog"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "scheme_crops_scheme_id_fkey"
+      columns: ["scheme_id"]
+isOneToOne: false
+      referencedRelation: "government_schemes"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"scheme_texts": {
+                  Row: {
+                    "benefit": string,"eligibility": string,"how_to_apply": string,"locale": string,"name": string,"required_documents": (string)[],"scheme_id": string,"summary": string
+                  }
+                  Insert: {
+                    "benefit": string,"eligibility": string,"how_to_apply": string,"locale": string,"name": string,"required_documents"?: (string)[],"scheme_id": string,"summary": string
+                  }
+                  Update: {
+                    "benefit"?: string,"eligibility"?: string,"how_to_apply"?: string,"locale"?: string,"name"?: string,"required_documents"?: (string)[],"scheme_id"?: string,"summary"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "scheme_texts_scheme_id_fkey"
+      columns: ["scheme_id"]
+isOneToOne: false
+      referencedRelation: "government_schemes"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -342,6 +399,9 @@ isOneToOne: false
                            },
 "harvest_sold_kg":
 { Args: { "p_except_sale_id"?: string,"p_harvest_id": string }; Returns: number
+                           },
+"import_scheme":
+{ Args: { "p": Json }; Returns: string
                            },
 "owns_crop_cycle":
 { Args: { "p_crop_cycle_id": string }; Returns: boolean
