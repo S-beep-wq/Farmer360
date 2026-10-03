@@ -46,14 +46,26 @@ See "Open questions" below.
 | Fix: dropdown choices were lost after a form error (all forms) | ✅ |
 | Unit, integration and end-to-end tests | ✅ |
 
+## Slice 4 — Crop status changes ✅ complete
+
+| Task | Status |
+|---|---|
+| Record sowing (Planned → In the field), adjusting the expected harvest if needed | ✅ |
+| Harvest finished (In the field → Harvested) | ✅ |
+| Cancel a planned or growing crop, with confirmation; cancelled crops are read-only history | ✅ |
+| Change crop details (crop, variety, season, the dates that apply to its status) | ✅ |
+| Database trigger enforcing allowed status changes; no lost updates between tabs | ✅ |
+| Unit, integration and end-to-end tests | ✅ |
+
+Not included on purpose: undoing a status change (for example, "harvested" by mistake), and
+`COMPLETED`, which belongs to the season review.
+
 ## Next slices (proposed, not started)
 
-1. **Crop status changes**: record sowing for a planned crop, mark harvested, cancel; edit a
-   crop's details. Without these a planned crop can never become "in the field" in the app.
-2. Crop activities (USER_WORKFLOWS.md section 7) and expenses (section 12).
-3. Crop observations with photos (sections 8–9) — needs Supabase Storage.
-4. Harvest, sale and season economics (sections 13, 15, 16).
-5. Government scheme / insurance information (sections 10–11).
+1. **Crop activities** (USER_WORKFLOWS.md section 7) and **expenses** (section 12) for a crop.
+2. Crop observations with photos (sections 8–9) — needs Supabase Storage.
+3. Harvest quantities, sale and season economics (sections 13, 15, 16).
+4. Government scheme / insurance information (sections 10–11).
 
 ## Open questions for the product owner
 
@@ -65,4 +77,6 @@ See "Open questions" below.
 - Which crops (and, later, which verified varieties and durations) should the catalog hold for the
   pilot district? The starter list is a reasonable guess, not a validated list.
 - Should a farmer be able to add a crop that is not in the catalog ("other")? Today they cannot.
+- Should a farmer be able to undo a status change made by mistake (e.g. "harvest finished")?
+  Today the dates can be corrected, but the status cannot go back.
 - Hindi wording should be reviewed by a native speaker from the pilot area.

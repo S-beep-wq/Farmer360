@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.3 |
+| **Version** | 0.4 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -367,7 +367,30 @@ record crops already in the field. `expected_harvest_date` is optional and enter
 Access: `public.owns_plot(plot_id)` checks that the plot is on one of the signed-in farmer's
 farms; select, insert and update policies use it, so a cycle cannot be read, added or moved onto
 another farmer's plot. There is no delete: a crop that is not grown should be `CANCELLED`.
-Status changes (sown, harvested, cancelled) are not built yet.
+
+### Status changes (v0.4)
+
+Enforced by the trigger `crop_cycles_check_status_change` and the constraint
+`crop_cycles_harvest_matches_status`:
+
+```text
+PLANNED   → ACTIVE      sowing recorded (actual_sowing_date set)
+PLANNED   → CANCELLED
+ACTIVE    → HARVESTED   harvest finished (actual_harvest_date set)
+ACTIVE    → CANCELLED   e.g. the crop was lost
+HARVESTED → COMPLETED   season review (not built yet)
+```
+
+- A new cycle must be `PLANNED` or `ACTIVE`.
+- `CANCELLED` and `COMPLETED` cycles can no longer be changed at all.
+- `actual_harvest_date` is set exactly when the status is `HARVESTED` or `COMPLETED`.
+- `plot_id` cannot change: a cycle's history belongs to the plot it was grown on.
+- The app updates a cycle only if it still has the status the farmer saw
+  (`... where status = <seen status>`), so two changes made at the same time cannot both apply.
+
+`actual_harvest_date` is the day the harvest **finished** (for crops picked many times, the last
+picking). Harvest quantities and quality belong to the `harvests` table (section 13), which is
+not built yet.
 
 ## 9. `crop_activities`
 
@@ -834,6 +857,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 |---|---|
 | `20261003044516_slice1_farmers_farms_plots.sql` | PostGIS; `farmers`, `farms`, `plots` with location/boundary; triggers; RLS. |
 | `20261003052122_slice3_crop_catalog_and_cycles.sql` | `crop_catalog` (+ starter list), `crop_cycles`, `owns_plot()`; RLS. |
+| `20261003053318_slice4_crop_status_changes.sql` | Crop status transition trigger; harvest-date/status constraint. |
 
 
 Database migrations must be version-controlled.

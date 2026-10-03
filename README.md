@@ -8,7 +8,7 @@ and [`DATABASE.md`](./DATABASE.md). The build plan and progress are in
 
 **Built so far:** phone login → farmer profile → farm → plot with location
 (phone GPS, map pin and/or drawn boundary, with area calculated in the database) → edit farm
-and plot → add crops to a plot (planned or already sown).
+and plot → add crops to a plot and track them (sown, harvest finished, cancelled, edited).
 The interface is in Hindi by default, with English available.
 
 ## Stack

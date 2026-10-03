@@ -94,3 +94,35 @@ export async function insertCropCycle(supabase: ServerSupabaseClient, plotId: st
     .single();
   return { id: data?.id, error };
 }
+
+type CropCyclePatch = {
+  status?: "ACTIVE" | "HARVESTED" | "CANCELLED";
+  crop_id?: string;
+  variety_name?: string | null;
+  season?: string;
+  planned_sowing_date?: string | null;
+  actual_sowing_date?: string | null;
+  expected_harvest_date?: string | null;
+  actual_harvest_date?: string | null;
+};
+
+/**
+ * Updates a crop cycle only if it still has `fromStatus`, so two changes made at the same time
+ * (for example in two browser tabs) cannot both apply. `updated` is false when nothing matched.
+ */
+export async function updateCropCycle(
+  supabase: ServerSupabaseClient,
+  plotId: string,
+  cycleId: string,
+  fromStatus: string,
+  patch: CropCyclePatch,
+) {
+  const { data, error } = await supabase
+    .from("crop_cycles")
+    .update(patch)
+    .eq("plot_id", plotId)
+    .eq("id", cycleId)
+    .eq("status", fromStatus)
+    .select("id");
+  return { updated: Boolean(data?.length), error };
+}

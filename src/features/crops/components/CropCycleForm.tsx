@@ -2,13 +2,13 @@
 
 import { useActionState, useState } from "react";
 
-import { ChoiceField, DateField, FormError, SelectField, SubmitButton, TextField } from "@/components/ui/form";
+import { ChoiceField, DateField, FormError, SubmitButton } from "@/components/ui/form";
 import { initialFormState, type FormState } from "@/lib/forms";
 import type { Locale, Messages } from "@/lib/i18n";
 
-import { SEASONS } from "../constants";
-import { cropName } from "../format";
 import type { Crop } from "../repository";
+
+import { CropBasicsFields } from "./CropBasicsFields";
 
 type Props = {
   t: Messages;
@@ -29,36 +29,9 @@ export function CropCycleForm({ t, locale, crops, action, today }: Props) {
     return key ? t.errors[key] : undefined;
   };
 
-  const cropOptions = crops
-    .map((c) => ({ value: c.id, label: cropName(c, locale) }))
-    .sort((a, b) => a.label.localeCompare(b.label, locale === "hi" ? "hi" : "en"));
-
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>
-      <SelectField
-        name="crop_id"
-        label={t.crops.cropLabel}
-        placeholder={t.common.choose}
-        options={cropOptions}
-        defaultValue={v.crop_id}
-        error={err("crop_id")}
-      />
-      <TextField
-        name="variety_name"
-        label={t.crops.varietyLabel}
-        hint={t.crops.varietyHint}
-        optionalLabel={t.common.optional}
-        maxLength={100}
-        defaultValue={v.variety_name}
-        error={err("variety_name")}
-      />
-      <ChoiceField
-        legend={t.crops.seasonLabel}
-        name="season"
-        options={SEASONS.map((s) => ({ value: s, label: t.seasons[s] }))}
-        defaultValue={v.season}
-        error={err("season")}
-      />
+      <CropBasicsFields t={t} locale={locale} crops={crops} values={v} errors={state.fieldErrors} />
       <ChoiceField
         legend={t.crops.alreadySownQuestion}
         name="already_sown"

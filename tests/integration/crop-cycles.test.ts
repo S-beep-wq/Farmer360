@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { listOpenCropsByPlot } from "@/features/crops/repository";
+import { listOpenCropsByPlot, updateCropCycle } from "@/features/crops/repository";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -157,7 +157,10 @@ describe("crop cycles", () => {
 
   it("cannot be moved to another farmer's plot or changed by them", async () => {
     const { error } = await a.from("crop_cycles").update({ plot_id: bPlotId }).eq("id", aCycleId);
-    expect(error?.code).toBe("42501");
+    // Refused by the "stays on its plot" trigger (23514), and by RLS (42501) if the trigger were removed.
+    expect(["23514", "42501"]).toContain(error?.code);
+    const { data: unchanged } = await a.from("crop_cycles").select("plot_id").eq("id", aCycleId).single();
+    expect(unchanged!.plot_id).toBe(aPlotId);
     const { data } = await b.from("crop_cycles").update({ variety_name: "Hijacked" }).eq("id", aCycleId).select("id");
     expect(data).toEqual([]);
   });
@@ -175,5 +178,91 @@ describe("crop cycles", () => {
     ]);
     // Another farmer's farm id gives nothing.
     expect((await listOpenCropsByPlot(b as unknown as ServerSupabaseClient, aFarmId)).size).toBe(0);
+  });
+});
+
+describe("crop status changes", () => {
+  async function newCycle(fields: Partial<Database["public"]["Tables"]["crop_cycles"]["Insert"]> = {}) {
+    const { data } = await a
+      .from("crop_cycles")
+      .insert({ plot_id: aPlotId, crop_id: wheatId, season: "rabi", planned_sowing_date: "2026-11-15", ...fields })
+      .select("id")
+      .single()
+      .throwOnError();
+    return data.id;
+  }
+
+  async function update(id: string, patch: Database["public"]["Tables"]["crop_cycles"]["Update"]) {
+    return a.from("crop_cycles").update(patch).eq("id", id).select("status").maybeSingle();
+  }
+
+  it("follow planned → in the field → harvested", async () => {
+    const id = await newCycle();
+    expect((await update(id, { status: "ACTIVE", actual_sowing_date: "2026-09-20" })).data?.status).toBe("ACTIVE");
+    expect((await update(id, { status: "HARVESTED", actual_harvest_date: "2026-10-01" })).data?.status).toBe("HARVESTED");
+  });
+
+  it("need the matching dates", async () => {
+    const id = await newCycle();
+    expect((await update(id, { status: "ACTIVE" })).error?.code).toBe("23514");
+    await update(id, { status: "ACTIVE", actual_sowing_date: "2026-09-20" });
+    expect((await update(id, { status: "HARVESTED" })).error?.code).toBe("23514");
+    expect((await update(id, { actual_harvest_date: "2026-10-01" })).error?.code).toBe("23514");
+  });
+
+  it("cannot skip steps or go backwards", async () => {
+    const planned = await newCycle();
+    const skip = await update(planned, { status: "HARVESTED", actual_sowing_date: "2026-09-20", actual_harvest_date: "2026-10-01" });
+    expect(skip.error?.code).toBe("23514");
+
+    const harvested = await newCycle({ status: "ACTIVE", planned_sowing_date: null, actual_sowing_date: "2026-07-01" });
+    await update(harvested, { status: "HARVESTED", actual_harvest_date: "2026-10-01" });
+    expect((await update(harvested, { status: "ACTIVE", actual_harvest_date: null })).error?.code).toBe("23514");
+    expect((await update(harvested, { status: "CANCELLED", actual_harvest_date: null })).error?.code).toBe("23514");
+  });
+
+  it("can cancel a planned or growing crop, after which it cannot be changed", async () => {
+    const planned = await newCycle();
+    expect((await update(planned, { status: "CANCELLED" })).data?.status).toBe("CANCELLED");
+    expect((await update(planned, { variety_name: "Changed later" })).error?.code).toBe("23514");
+    expect((await update(planned, { status: "PLANNED" })).error?.code).toBe("23514");
+
+    const active = await newCycle({ status: "ACTIVE", planned_sowing_date: null, actual_sowing_date: "2026-07-01" });
+    expect((await update(active, { status: "CANCELLED" })).data?.status).toBe("CANCELLED");
+  });
+
+  it("cannot be created as harvested, completed or cancelled", async () => {
+    for (const status of ["HARVESTED", "COMPLETED", "CANCELLED"]) {
+      const { error } = await a.from("crop_cycles").insert({
+        plot_id: aPlotId,
+        crop_id: wheatId,
+        season: "rabi",
+        status,
+        actual_sowing_date: "2026-07-01",
+        actual_harvest_date: status === "CANCELLED" ? null : "2026-10-01",
+      });
+      expect(error?.code, status).toBe("23514");
+    }
+  });
+
+  it("stay on the plot they were grown on", async () => {
+    const { data: otherPlot } = await a
+      .from("plots")
+      .insert({ farm_id: aFarmId, name: "Other plot", area: 1, area_unit: "acre" })
+      .select("id")
+      .single()
+      .throwOnError();
+    const id = await newCycle();
+    expect((await update(id, { plot_id: otherPlot.id })).error?.code).toBe("23514");
+  });
+
+  it("are only updated from the status the farmer saw (no lost updates)", async () => {
+    const id = await newCycle();
+    const client = a as unknown as ServerSupabaseClient;
+    const first = await updateCropCycle(client, aPlotId, id, "PLANNED", { status: "CANCELLED" });
+    expect(first).toMatchObject({ updated: true, error: null });
+    // A second tab still showing "planned" tries to record sowing.
+    const second = await updateCropCycle(client, aPlotId, id, "PLANNED", { status: "ACTIVE", actual_sowing_date: "2026-09-20" });
+    expect(second).toMatchObject({ updated: false, error: null });
   });
 });

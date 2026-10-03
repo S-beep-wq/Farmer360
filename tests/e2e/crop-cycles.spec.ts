@@ -123,3 +123,109 @@ test("crop pages for unknown ids are not found", async ({ page }) => {
   await page.goto(`${plotUrl}/crops/00000000-0000-4000-8000-000000000000`);
   await expect(page.getByRole("heading", { name: "This page was not found." })).toBeVisible();
 });
+
+async function openCrop(page: Page, name: RegExp, heading: string) {
+  await openPlot(page);
+  await page.getByRole("link", { name }).click();
+  await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+}
+
+test("a farmer records sowing for a planned crop", async ({ page }) => {
+  await signIn(page);
+  await openCrop(page, /^Wheat/, "Wheat");
+  await expect(page.getByTestId("crop-status")).toHaveText("Planned");
+  await page.getByRole("link", { name: "Record sowing" }).click();
+
+  await expect(page.getByRole("heading", { name: "When was it sown?" })).toBeVisible();
+  await expect(page.getByLabel("Sowing date")).toHaveValue(TODAY);
+  await page.getByLabel("Sowing date").fill(addDays(TODAY, 3));
+  await page.getByRole("button", { name: "Record sowing" }).click();
+  await expect(page.getByText("The sowing date cannot be in the future.", { exact: false })).toBeVisible();
+
+  await page.getByLabel("Sowing date").fill(addDays(TODAY, -2));
+  await page.getByRole("button", { name: "Record sowing" }).click();
+
+  await expect(page.getByRole("heading", { name: "Wheat" })).toBeVisible();
+  await expect(page.getByTestId("crop-status")).toHaveText("In the field");
+  await expect(page.getByText("Sown on")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Record sowing" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Harvest finished" })).toBeVisible();
+});
+
+test("a farmer corrects a crop's details", async ({ page }) => {
+  await signIn(page);
+  await openCrop(page, /^Rice/, "Rice (paddy)");
+  await page.getByRole("link", { name: "Change details" }).click();
+
+  await expect(page.getByRole("heading", { name: "Change crop details" })).toBeVisible();
+  await expect(page.getByLabel(/Variety/)).toHaveValue("Rajendra Mahsuri");
+  await expect(page.getByRole("radio", { name: "Kharif (monsoon)" })).toBeChecked();
+  await expect(page.getByLabel("Sowing date")).toHaveValue(addDays(TODAY, -60));
+
+  await page.getByLabel(/Variety/).fill("MTU 7029");
+  await page.getByLabel("Sowing date").fill(addDays(TODAY, 1));
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("The sowing date cannot be in the future.", { exact: false })).toBeVisible();
+  await expect(page.getByLabel("Which crop?")).toHaveValue(/[0-9a-f-]{36}/);
+
+  await page.getByLabel("Sowing date").fill(addDays(TODAY, -55));
+  await page.getByRole("button", { name: "Save changes" }).click();
+
+  await expect(page.getByRole("heading", { name: "Rice (paddy)" })).toBeVisible();
+  await expect(page.getByText("MTU 7029")).toBeVisible();
+});
+
+test("a farmer marks the harvest as finished", async ({ page }) => {
+  await signIn(page);
+  await openCrop(page, /^Rice/, "Rice (paddy)");
+  await page.getByRole("link", { name: "Harvest finished" }).click();
+
+  await expect(page.getByRole("heading", { name: "When did the harvest finish?" })).toBeVisible();
+  await page.getByLabel(/Harvest finished on/).fill(addDays(TODAY, -70));
+  await page.getByRole("button", { name: "Harvest finished" }).click();
+  await expect(page.getByText("The harvest date must be after the sowing date.")).toBeVisible();
+
+  await page.getByLabel(/Harvest finished on/).fill(TODAY);
+  await page.getByRole("button", { name: "Harvest finished" }).click();
+
+  await expect(page.getByRole("heading", { name: "Rice (paddy)" })).toBeVisible();
+  await expect(page.getByTestId("crop-status")).toHaveText("Harvested");
+  await expect(page.getByText("Harvest finished on")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Cancel this crop" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Change details" })).toBeVisible();
+
+  // A harvested crop is no longer shown as on the plot now.
+  await page.getByRole("link", { name: "East plot" }).first().click();
+  await expect(page.getByRole("heading", { name: "East plot" })).toBeVisible();
+  await page.getByRole("link", { name: "Home farm" }).first().click();
+  await expect(page.getByText("Now: Wheat")).toBeVisible();
+});
+
+test("a farmer cancels a crop after confirming", async ({ page }) => {
+  await signIn(page);
+  await openCrop(page, /^Wheat/, "Wheat");
+  const cropUrl = page.url();
+
+  await page.getByRole("link", { name: "Cancel this crop" }).click();
+  await expect(page.getByRole("heading", { name: "Cancel this crop?" })).toBeVisible();
+  await page.getByRole("link", { name: "No, go back" }).click();
+  await expect(page.getByTestId("crop-status")).toHaveText("In the field");
+
+  await page.getByRole("link", { name: "Cancel this crop" }).click();
+  await page.getByRole("button", { name: "Yes, cancel this crop" }).click();
+
+  await expect(page.getByRole("heading", { name: "Wheat" })).toBeVisible();
+  await expect(page.getByTestId("crop-status")).toHaveText("Cancelled");
+  await expect(page.getByText("This crop was cancelled. It is kept in the plot's history.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Change details" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Cancel this crop" })).toHaveCount(0);
+
+  // Steps that no longer apply send the farmer back to the crop.
+  for (const step of ["sowing", "harvest", "cancel", "edit"]) {
+    await page.goto(`${cropUrl}/${step}`);
+    await expect(page).toHaveURL(cropUrl);
+  }
+
+  await page.getByRole("link", { name: "East plot" }).first().click();
+  await expect(page.getByTestId("crop-status")).toHaveText(["Harvested", "Cancelled"]);
+});
