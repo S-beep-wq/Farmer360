@@ -55,6 +55,13 @@ export async function listInsuranceForCrop(supabase: ServerSupabaseClient, cropI
   return data.map((row) => toProduct(row, locale)).filter((p): p is InsuranceProduct => p !== null);
 }
 
+/** All published products (for comparing crops when planning). */
+export async function listInsuranceProducts(supabase: ServerSupabaseClient, locale: Locale): Promise<InsuranceProduct[]> {
+  const { data, error } = await supabase.from("insurance_products").select(COLUMNS).overrideTypes<ProductRow[], { merge: false }>();
+  if (error) throw error;
+  return data.map((row) => toProduct(row, locale)).filter((p): p is InsuranceProduct => p !== null);
+}
+
 export async function getInsuranceProduct(supabase: ServerSupabaseClient, productId: string, locale: Locale): Promise<InsuranceProduct | null> {
   const { data, error } = await supabase
     .from("insurance_products")

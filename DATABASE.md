@@ -302,6 +302,11 @@ Crop data should not be hard-coded throughout the application.
   requirements) stay empty until filled from a verified source; the app does not estimate
   durations or harvest dates.
 - Read-only for signed-in users; no access for signed-out visitors. Changes are made by migration.
+- Crop planning (slice 14, no schema change) does not use the empty agronomic columns. It compares
+  crops only from the farmer's own closed seasons (`crop_cycle_totals`), open buyer demand and
+  scheme/insurance information. When verified reference data (duration, water and labour needs,
+  cost ranges for the pilot district) is available, it should carry a source and check date like
+  schemes do.
 
 ## 7. `crop_varieties`
 

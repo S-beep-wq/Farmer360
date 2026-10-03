@@ -16,7 +16,8 @@ shown on the plot for planning the next crop → crop photos and notes over time
 → buyer discovery: buyers register and publish demand; farmers find buyers by crop, place and
 quantity, call them or say they are interested → government schemes that may be relevant (by
 district and crops), from official sources loaded by the team (see `docs/SCHEMES.md`) → crop
-insurance information on each crop (see `docs/INSURANCE.md`).
+insurance information on each crop (see `docs/INSURANCE.md`) → crop planning: compare crops for a
+plot and season from the farmer's own past seasons, buyers and support.
 The interface is in Hindi by default, with English available.
 
 ## Stack
@@ -35,7 +36,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900019`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900020`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run
@@ -74,6 +75,7 @@ src/
 │   ├── insurance/       # crop insurance information per crop (read-only)
 │   ├── market/          # buyers, their demand and farmers' interest (buyer discovery)
 │   ├── observations/    # crop photos and notes, health timeline (Supabase Storage)
+│   ├── planning/        # crop planning: compare crops for a plot and season (pure engine)
 │   ├── plots/           # incl. location/ (map, GPS, boundary, geometry)
 │   ├── schemes/         # government scheme information and matching (read-only)
 │   ├── season-review/   # season review, crop totals view, closing a crop

@@ -89,6 +89,10 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
           </ul>
         )}
         <LinkButton href={`/farms/${farm.id}/plots/${plot.id}/crops/new`}>{t.crops.addCrop}</LinkButton>
+        {/* Select plot → select season → compare crops → create crop cycle (USER_WORKFLOWS.md section 5). */}
+        <LinkButton href={`/farms/${farm.id}/plots/${plot.id}/plan`} variant="secondary">
+          {t.planning.link}
+        </LinkButton>
       </section>
 
       <Card>

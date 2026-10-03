@@ -4,6 +4,7 @@ import { Card, DetailRow, Page, PageTitle } from "@/components/ui/layout";
 import { createCropCycleAction } from "@/features/crops/actions";
 import { CropCycleForm } from "@/features/crops/components/CropCycleForm";
 import { todayInIndia } from "@/features/crops/dates";
+import { isSeason } from "@/features/crops/format";
 import { listCrops } from "@/features/crops/repository";
 import { getFarm } from "@/features/farms/repository";
 import { isId } from "@/features/farms/schema";
@@ -12,9 +13,11 @@ import { requireFarmer } from "@/lib/auth";
 import { getServerMessages } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function NewCropCyclePage({ params }: PageProps<"/farms/[farmId]/plots/[plotId]/crops/new">) {
+export default async function NewCropCyclePage({ params, searchParams }: PageProps<"/farms/[farmId]/plots/[plotId]/crops/new">) {
   await requireFarmer();
   const { farmId, plotId } = await params;
+  // Coming from crop planning: the chosen crop and season are filled in (and can be changed).
+  const { crop, season } = await searchParams;
   if (!isId(farmId) || !isId(plotId)) notFound();
 
   const supabase = await createClient();
@@ -23,6 +26,9 @@ export default async function NewCropCyclePage({ params }: PageProps<"/farms/[fa
   if (!farm || !plot) notFound();
 
   const { locale, t } = await getServerMessages();
+  const initialValues: Record<string, string> = {};
+  if (typeof crop === "string" && crops.some((c) => c.id === crop)) initialValues.crop_id = crop;
+  if (typeof season === "string" && isSeason(season)) initialValues.season = season;
 
   return (
     <Page>
@@ -41,6 +47,7 @@ export default async function NewCropCyclePage({ params }: PageProps<"/farms/[fa
         crops={crops}
         action={createCropCycleAction.bind(null, farm.id, plot.id)}
         today={todayInIndia()}
+        initialValues={initialValues}
       />
     </Page>
   );

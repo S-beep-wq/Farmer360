@@ -17,12 +17,14 @@ type Props = {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   /** Today in India, so an already-sown date cannot be picked in the future. */
   today: string;
+  /** Choices made before opening the form (e.g. the crop and season picked when planning). */
+  initialValues?: Record<string, string>;
 };
 
 /** Add a crop to a plot: crop, variety, season and (planned or actual) sowing date. */
-export function CropCycleForm({ t, locale, crops, action, today }: Props) {
+export function CropCycleForm({ t, locale, crops, action, today, initialValues = {} }: Props) {
   const [state, formAction] = useActionState(action, initialFormState);
-  const v = state.values ?? {};
+  const v = state.values ?? initialValues;
   const [alreadySown, setAlreadySown] = useState(v.already_sown ?? "");
   const err = (field: string) => {
     const key = state.fieldErrors?.[field];

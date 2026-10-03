@@ -179,11 +179,28 @@ available yet".
 
 **No real insurance information is loaded**, for the same reason as schemes (docs/INSURANCE.md).
 
+## Slice 14 — Crop planning ✅ complete
+
+| Task | Status |
+|---|---|
+| "Plan the next crop" on a plot: plot facts (area, soil, irrigation) and the last crop grown there | ✅ |
+| Choose a season; every catalog crop is a candidate | ✅ |
+| From the farmer's own closed seasons in that season: result, cost, sales and harvest per acre (range and average), days in the field, seasons on this plot | ✅ |
+| From the app today: buyers looking for the crop, crop schemes that may apply, open crop insurance | ✅ |
+| Crops with records first, sorted by own average result per acre; "grown on this plot last" shown | ✅ |
+| Clear note: facts from the farmer's records, not a prediction; no cost, harvest or price estimates | ✅ |
+| "Plan this crop" opens "Add a crop" with the crop and season filled in | ✅ |
+| Planning engine as a pure function with structured results; unit, integration and end-to-end tests | ✅ |
+
+No migration: planning reads existing data. Not shown, because there is no verified data yet:
+duration, water, labour and input needs, cost/revenue/margin estimates, production risks and
+whether a crop suits the season (USER_WORKFLOWS.md section 5 lists these as "potentially").
+
 ## Next slices (proposed, not started)
 
-1. Crop planning: compare candidate crops for a plot and season (USER_WORKFLOWS.md section 5), first
-   from the farmer's own past seasons on that plot; cost/revenue estimates need verified
-   reference data for the pilot district.
+1. Verified crop reference data for planning (duration, water and labour needs, typical cost and
+   price ranges for the pilot district, which seasons each crop suits), loaded with a source and
+   check date like schemes — needs a source agreed with agronomists.
 2. AI crop-health assistance on observations (PRODUCT_SPEC.md section 16) — needs a model choice,
    a confidence/uncertainty design and field validation.
 
@@ -204,6 +221,8 @@ available yet".
 - Should vegetables be recorded in pieces or crates as well as kg/quintal? Today only weight units
   are supported, so sales can be checked against the harvest.
 - Should a sale record how much money has been received so far (for "partly paid")?
+- For crop planning, which source should give crop reference data (KVK, state agriculture
+  department, the team's agronomist)? Until then only the farmer's own records are compared.
 - Which crop insurance information applies in the pilot district (crops, seasons, enrolment
   dates, claim reporting), and who checks it each season?
 - Which schemes should be loaded for the pilot district, and who in the team checks and re-checks
