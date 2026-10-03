@@ -188,6 +188,44 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"crop_reference_texts": {
+                  Row: {
+                    "input_needs": string | null,"locale": string,"market_notes": string | null,"production_risks": string | null,"reference_id": string
+                  }
+                  Insert: {
+                    "input_needs"?: string | null,"locale": string,"market_notes"?: string | null,"production_risks"?: string | null,"reference_id": string
+                  }
+                  Update: {
+                    "input_needs"?: string | null,"locale"?: string,"market_notes"?: string | null,"production_risks"?: string | null,"reference_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "crop_reference_texts_reference_id_fkey"
+      columns: ["reference_id"]
+isOneToOne: false
+      referencedRelation: "crop_references"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"crop_references": {
+                  Row: {
+                    "cost_per_acre_max": number | null,"cost_per_acre_min": number | null,"created_at": string,"crop_id": string,"districts": (string)[],"duration_days_max": number | null,"duration_days_min": number | null,"id": string,"labour_days_per_acre_max": number | null,"labour_days_per_acre_min": number | null,"last_verified_at": string,"price_per_quintal_max": number | null,"price_per_quintal_min": number | null,"season": string,"slug": string,"source_name": string,"source_url": string,"state": string | null,"status": string,"updated_at": string,"water_need": string | null,"yield_kg_per_acre_max": number | null,"yield_kg_per_acre_min": number | null
+                  }
+                  Insert: {
+                    "cost_per_acre_max"?: number | null,"cost_per_acre_min"?: number | null,"created_at"?: string,"crop_id": string,"districts"?: (string)[],"duration_days_max"?: number | null,"duration_days_min"?: number | null,"id"?: string,"labour_days_per_acre_max"?: number | null,"labour_days_per_acre_min"?: number | null,"last_verified_at": string,"price_per_quintal_max"?: number | null,"price_per_quintal_min"?: number | null,"season": string,"slug": string,"source_name": string,"source_url": string,"state"?: string | null,"status"?: string,"updated_at"?: string,"water_need"?: string | null,"yield_kg_per_acre_max"?: number | null,"yield_kg_per_acre_min"?: number | null
+                  }
+                  Update: {
+                    "cost_per_acre_max"?: number | null,"cost_per_acre_min"?: number | null,"created_at"?: string,"crop_id"?: string,"districts"?: (string)[],"duration_days_max"?: number | null,"duration_days_min"?: number | null,"id"?: string,"labour_days_per_acre_max"?: number | null,"labour_days_per_acre_min"?: number | null,"last_verified_at"?: string,"price_per_quintal_max"?: number | null,"price_per_quintal_min"?: number | null,"season"?: string,"slug"?: string,"source_name"?: string,"source_url"?: string,"state"?: string | null,"status"?: string,"updated_at"?: string,"water_need"?: string | null,"yield_kg_per_acre_max"?: number | null,"yield_kg_per_acre_min"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "crop_references_crop_id_fkey"
+      columns: ["crop_id"]
+isOneToOne: false
+      referencedRelation: "crop_catalog"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"demand_interests": {
                   Row: {
                     "created_at": string,"demand_id": string,"farmer_id": string,"id": string,"note": string | null
@@ -494,6 +532,9 @@ isOneToOne: false
                            },
 "harvest_sold_kg":
 { Args: { "p_except_sale_id"?: string,"p_harvest_id": string }; Returns: number
+                           },
+"import_crop_reference":
+{ Args: { "p": Json }; Returns: string
                            },
 "import_insurance_product":
 { Args: { "p": Json }; Returns: string

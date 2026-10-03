@@ -250,12 +250,23 @@ weather, IMD as a source, weather in crop planning.
 `api.open-meteo.com`, so the adapter was built from Open-Meteo's documented response format and
 tested against a stand-in. Check one real response before release.
 
+## Slice 18 — Crop reference data for planning ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `crop_references` (ranges per crop, season, area; source and check date required), texts in Hindi and English | ✅ |
+| `import_crop_reference()` (service role); `npm run crop-references:import`; `docs/CROP_REFERENCES.md` | ✅ |
+| Most specific reference for the farmer (district, then state, then India) | ✅ |
+| Planning card: "Reference estimates (not your records)" — time in field, water, labour, cost, harvest, price, possible sales and result per acre, inputs, risks, market — with source, check date, 6-month warning | ✅ |
+| "Usually grown in this season"; such crops listed first among crops without own records; the farmer's own results are never reordered by estimates | ✅ |
+| Unit, integration and end-to-end tests | ✅ |
+
+**No reference data is loaded**: the numbers must come from an agreed source for the pilot
+district (docs/CROP_REFERENCES.md). Until then planning works as in slice 14.
+
 ## Next slices (proposed, not started)
 
-1. Verified crop reference data for planning (duration, water and labour needs, typical cost and
-   price ranges for the pilot district, which seasons each crop suits), loaded with a source and
-   check date like schemes — needs a source agreed with agronomists.
-2. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
+1. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
    a second, official source.
 
 ## Open questions for the product owner
@@ -276,7 +287,8 @@ tested against a stand-in. Check one real response before release.
   are supported, so sales can be checked against the harvest.
 - Should a sale record how much money has been received so far (for "partly paid")?
 - For crop planning, which source should give crop reference data (KVK, state agriculture
-  department, the team's agronomist)? Until then only the farmer's own records are compared.
+  department, CACP cost-of-cultivation data, the team's agronomist)? The loader is ready
+  (docs/CROP_REFERENCES.md); until data is loaded only the farmer's own records are compared.
 - Which crop insurance information applies in the pilot district (crops, seasons, enrolment
   dates, claim reporting), and who checks it each season?
 - Which schemes should be loaded for the pilot district, and who in the team checks and re-checks

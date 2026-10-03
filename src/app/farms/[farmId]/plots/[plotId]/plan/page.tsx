@@ -11,7 +11,8 @@ import { isId } from "@/features/farms/schema";
 import { listInsuranceProducts } from "@/features/insurance/repository";
 import { CandidateCard } from "@/features/planning/components/CandidateCard";
 import { planCandidates } from "@/features/planning/engine";
-import { countOpenDemand, lastCropOnPlot, listPastSeasons } from "@/features/planning/repository";
+import { pickReference, referenceEstimate } from "@/features/planning/reference";
+import { countOpenDemand, lastCropOnPlot, listCropReferences, listPastSeasons } from "@/features/planning/repository";
 import { supportCounts } from "@/features/planning/support";
 import { formatArea } from "@/features/plots/format";
 import { getPlot } from "@/features/plots/repository";
@@ -40,13 +41,23 @@ export default async function PlanCropPage({ params, searchParams }: PageProps<"
   let plan = null;
   if (season) {
     const today = todayInIndia();
-    const [pastSeasons, openDemand, schemes, insurance] = await Promise.all([
+    const [pastSeasons, openDemand, schemes, insurance, references] = await Promise.all([
       listPastSeasons(supabase),
       countOpenDemand(supabase, today),
       listSchemes(supabase, locale),
       listInsuranceProducts(supabase, locale),
+      listCropReferences(supabase, season, locale),
     ]);
     const cropIds = crops.map((c) => c.id);
+    const estimates = new Map(
+      cropIds.flatMap((id) => {
+        const ref = pickReference(
+          references.filter((r) => r.crop_id === id),
+          farmer,
+        );
+        return ref ? [[id, referenceEstimate(ref)] as const] : [];
+      }),
+    );
     plan = planCandidates({
       season,
       plotId: plot.id,
@@ -54,6 +65,7 @@ export default async function PlanCropPage({ params, searchParams }: PageProps<"
       pastSeasons,
       lastCropOnPlot: last?.crop_id ?? null,
       openDemand,
+      references: estimates,
       ...supportCounts(cropIds, season, farmer, schemes, insurance, today),
     });
   }
@@ -62,7 +74,7 @@ export default async function PlanCropPage({ params, searchParams }: PageProps<"
     const name = cropName(crop(c.crop_id)!, locale);
     return (
       <li key={c.crop_id}>
-        <CandidateCard t={t} locale={locale} candidate={c} cropName={name} planHref={`${plotHref}/crops/new?crop=${c.crop_id}&season=${season}`} />
+        <CandidateCard t={t} locale={locale} today={todayInIndia()} candidate={c} cropName={name} planHref={`${plotHref}/crops/new?crop=${c.crop_id}&season=${season}`} />
       </li>
     );
   };
@@ -110,7 +122,7 @@ export default async function PlanCropPage({ params, searchParams }: PageProps<"
         <>
           <div className="flex flex-col gap-2 rounded-xl border-2 border-blue-200 bg-blue-50 p-4 text-lg text-blue-950" data-testid="facts-note">
             <p>{t.planning.factsNote}</p>
-            <p>{t.planning.noEstimates}</p>
+            <p>{[...plan.withHistory, ...plan.others].some((c) => c.reference) ? t.planning.estimatesNote : t.planning.noEstimates}</p>
           </div>
 
           <section className="flex flex-col gap-3">

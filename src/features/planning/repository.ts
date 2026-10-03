@@ -2,7 +2,10 @@ import { plotAcres } from "@/features/season-review/summary";
 import { listCropTotals } from "@/features/season-review/repository";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 
+import type { Locale } from "@/lib/i18n";
+
 import type { PastSeason } from "./engine";
+import type { CropReference } from "./reference";
 
 // Data for crop planning, all under the farmer's session (RLS): their closed seasons with totals,
 // and how many buyers are looking for each crop right now.
@@ -60,4 +63,27 @@ export async function lastCropOnPlot(supabase: ServerSupabaseClient, plotId: str
     .limit(1);
   if (error) throw error;
   return data[0] ? { crop_id: data[0].crop_id, season: data[0].season } : null;
+}
+
+type ReferenceRow = Omit<CropReference, "text"> & {
+  texts: { locale: string; input_needs: string | null; production_risks: string | null; market_notes: string | null }[];
+};
+
+/** Published reference data for a season (read-only, loaded by the team: docs/CROP_REFERENCES.md). */
+export async function listCropReferences(supabase: ServerSupabaseClient, season: string, locale: Locale): Promise<CropReference[]> {
+  const { data, error } = await supabase
+    .from("crop_references")
+    .select(
+      "id, crop_id, season, state, districts, duration_days_min, duration_days_max, water_need, labour_days_per_acre_min, " +
+        "labour_days_per_acre_max, cost_per_acre_min, cost_per_acre_max, yield_kg_per_acre_min, yield_kg_per_acre_max, " +
+        "price_per_quintal_min, price_per_quintal_max, source_name, source_url, last_verified_at, " +
+        "texts:crop_reference_texts(locale, input_needs, production_risks, market_notes)",
+    )
+    .eq("season", season)
+    .overrideTypes<ReferenceRow[], { merge: false }>();
+  if (error) throw error;
+  return data.map(({ texts, ...row }) => {
+    const text = texts.find((t) => t.locale === locale) ?? texts[0] ?? null;
+    return { ...row, text: text ? { input_needs: text.input_needs, production_risks: text.production_risks, market_notes: text.market_notes } : null };
+  });
 }

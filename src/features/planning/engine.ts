@@ -1,6 +1,8 @@
 import { daysInField, seasonSummary } from "@/features/season-review/summary";
 import type { CropTotals } from "@/features/season-review/repository";
 
+import type { ReferenceEstimate } from "./reference";
+
 // Crop planning (USER_WORKFLOWS.md section 5): compares candidate crops for one plot and season
 // and returns structured results (SYSTEM_ARCHITECTURE.md section 14). Everything here is a
 // FACT from the farmer's own records or from what is in the app today (open buyer demand,
@@ -34,6 +36,8 @@ export type CropHistory = {
 export type Candidate = {
   crop_id: string;
   history: CropHistory;
+  /** Typical ranges from a reference source for this crop, season and place (estimates, not facts). */
+  reference: ReferenceEstimate | null;
   /** This crop was the last one grown on this plot. */
   grownHereLast: boolean;
   openDemand: number;
@@ -50,6 +54,8 @@ export type PlanInput = {
   openDemand: Map<string, number>;
   schemes: Map<string, number>;
   insurance: Map<string, number>;
+  /** Reference estimates by crop, for this season and place. */
+  references?: Map<string, ReferenceEstimate>;
 };
 
 export function range(values: number[]): Range | null {
@@ -77,7 +83,9 @@ export function cropHistory(pastSeasons: PastSeason[], plotId: string): CropHist
 
 /**
  * Every catalog crop as a candidate. Crops the farmer has closed seasons of (in this season) come
- * first, ordered by their own average result per acre; then the rest, in catalog order.
+ * first, ordered by their own average result per acre; then the rest: crops with reference data
+ * for this season (usually grown then) before the others, in catalog order. Estimates never
+ * change the order of the farmer's own results.
  */
 export function planCandidates(input: PlanInput): { withHistory: Candidate[]; others: Candidate[] } {
   const inSeason = input.pastSeasons.filter((s) => s.season === input.season);
@@ -87,6 +95,7 @@ export function planCandidates(input: PlanInput): { withHistory: Candidate[]; ot
       inSeason.filter((s) => s.crop_id === crop_id),
       input.plotId,
     ),
+    reference: input.references?.get(crop_id) ?? null,
     grownHereLast: input.lastCropOnPlot === crop_id,
     openDemand: input.openDemand.get(crop_id) ?? 0,
     schemes: input.schemes.get(crop_id) ?? 0,
@@ -95,6 +104,6 @@ export function planCandidates(input: PlanInput): { withHistory: Candidate[]; ot
   const net = (c: Candidate) => c.history.netPerAcre?.average ?? Number.NEGATIVE_INFINITY;
   return {
     withHistory: candidates.filter((c) => c.history.seasons > 0).sort((a, b) => net(b) - net(a)),
-    others: candidates.filter((c) => c.history.seasons === 0),
+    others: candidates.filter((c) => c.history.seasons === 0).sort((a, b) => Number(b.reference !== null) - Number(a.reference !== null)),
   };
 }

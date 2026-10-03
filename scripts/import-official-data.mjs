@@ -1,5 +1,5 @@
-// Loads checked official information into Supabase: government schemes (docs/SCHEMES.md) or crop
-// insurance (docs/INSURANCE.md).
+// Loads checked official information into Supabase: government schemes (docs/SCHEMES.md), crop
+// insurance (docs/INSURANCE.md) or crop reference data for planning (docs/CROP_REFERENCES.md).
 //
 //   node --env-file=.env.local scripts/import-official-data.mjs schemes path/to/schemes.json
 //   node --env-file=.env.local scripts/import-official-data.mjs insurance path/to/insurance.json
@@ -12,11 +12,11 @@ import { readFile } from "node:fs/promises";
 
 import { createClient } from "@supabase/supabase-js";
 
-const FUNCTIONS = { schemes: "import_scheme", insurance: "import_insurance_product" };
+const FUNCTIONS = { schemes: "import_scheme", insurance: "import_insurance_product", "crop-references": "import_crop_reference" };
 
 const [kind, file] = process.argv.slice(2);
 if (!(kind in FUNCTIONS) || !file) {
-  console.error("Usage: node --env-file=.env.local scripts/import-official-data.mjs <schemes|insurance> <file.json>");
+  console.error("Usage: node --env-file=.env.local scripts/import-official-data.mjs <schemes|insurance|crop-references> <file.json>");
   process.exit(2);
 }
 

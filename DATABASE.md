@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.16 |
+| **Version** | 0.18 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -307,6 +307,29 @@ Crop data should not be hard-coded throughout the application.
   scheme/insurance information. When verified reference data (duration, water and labour needs,
   cost ranges for the pilot district) is available, it should carry a source and check date like
   schemes do.
+
+## 6a. `crop_references` (v0.18)
+
+Reference ranges for crop planning: a crop in a season and area, from an agronomic or official
+source. These are **estimates**, shown apart from the farmer's own records (facts). Used instead of
+the empty agronomic columns of `crop_catalog`, because they depend on season and area and need a
+source.
+
+```text
+id, slug, crop_id, season, state (null: India), districts (empty: whole state)
+duration_days_min/max, water_need (LOW/MEDIUM/HIGH)
+labour_days_per_acre_min/max, cost_per_acre_min/max (₹)
+yield_kg_per_acre_min/max, price_per_quintal_min/max (₹)
+source_name, source_url (https), last_verified_at, status (PUBLISHED/ARCHIVED)
+```
+
+- `crop_reference_texts` (per `hi`/`en`, both required): `input_needs`, `production_risks`,
+  `market_notes` (all optional).
+- Every range is optional, but both ends together, positive, and min ≤ max (check constraints).
+- A row for a crop and season means "usually grown in this season" in that area.
+- Loaded by the team with `public.import_crop_reference(jsonb)` (service role only), see
+  `docs/CROP_REFERENCES.md`. Signed-in users read published rows; nobody writes through the API.
+- No reference data ships with the app.
 
 ## 7. `crop_varieties`
 
@@ -1185,6 +1208,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003094055_slice13_crop_insurance.sql` | `insurance_products`, `insurance_texts`, `insurance_crops`; `import_insurance_product()` (service role); read-only RLS. |
 | `20261003110337_slice15_crop_health_ai.sql` | `crop_health_analyses` (limits, feedback-only updates); RLS. |
 | `20261003114625_slice16_farm_assistant.sql` | `ai_interactions` (metadata only, daily limit, feedback-only updates); RLS. |
+| `20261003122004_slice18_crop_references.sql` | `crop_references`, `crop_reference_texts`; `import_crop_reference()` (service role); read-only RLS. |
 
 
 Database migrations must be version-controlled.

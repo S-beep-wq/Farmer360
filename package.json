@@ -17,7 +17,8 @@
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts",
     "schemes:import": "node --env-file=.env.local scripts/import-official-data.mjs schemes",
-    "insurance:import": "node --env-file=.env.local scripts/import-official-data.mjs insurance"
+    "insurance:import": "node --env-file=.env.local scripts/import-official-data.mjs insurance",
+    "crop-references:import": "node --env-file=.env.local scripts/import-official-data.mjs crop-references"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
