@@ -7,9 +7,9 @@ Kisan 360 in the pilot district. The items in **section 2** block the pilot.
 
 ### Accessibility — `tests/e2e/accessibility.spec.ts`
 
-axe-core with the WCAG 2.1 A/AA and 2.2 AA rules (including touch-target size) on **40 screen
-states**: signed out, onboarding, every farmer screen (with a farm, mapped plot, crop, photo and an
-AI answer), a form showing errors, five screens in Hindi, and the buyer screens. It runs with the
+axe-core with the WCAG 2.1 A/AA and 2.2 AA rules (including touch-target size) on **44 screen
+states**: signed out, the data-use notice and consent screen (also with an error), onboarding, every farmer screen (with a farm, mapped plot, crop, photo and an
+AI answer), a form showing errors, six screens in Hindi, and the buyer screens. It runs with the
 other end-to-end tests, so new problems fail the build.
 
 Found and fixed:

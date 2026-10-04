@@ -54,13 +54,16 @@ test("signed-out and onboarding screens", async ({ page }) => {
   await page.goto("/privacy");
   findings.push(...(await audit(page, "privacy notice")));
   await logIn(page, TEST_PHONES.e2eA11yFarmer, { acceptNotice: false });
-  await page.waitForURL(/\/consent$/);
+  await expect(page).toHaveURL(/\/consent$/);
+  await page.goto("/consent");
   findings.push(...(await audit(page, "consent")));
   await page.getByRole("button", { name: "Agree and continue" }).click();
   await expect(page.getByText("Tick the box to agree.")).toBeVisible();
   findings.push(...(await audit(page, "consent (error)")));
   await acceptNotice(page);
-  await page.waitForURL(/\/onboarding$/);
+  await expect(page).toHaveURL(/\/onboarding$/);
+  // Audit a full page load, like every other screen here (the title is set just after a client-side redirect).
+  await page.goto("/onboarding");
   findings.push(...(await audit(page, "onboarding")));
   await page.goto("/onboarding/buyer");
   findings.push(...(await audit(page, "buyer onboarding")));
