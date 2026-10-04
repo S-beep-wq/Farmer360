@@ -7,7 +7,8 @@ import { logInWithProfile } from "./helpers";
 // Weather for a plot (SYSTEM_ARCHITECTURE.md section 13). Forecasts come from a local stand-in
 // shaped like Open-Meteo (tests/support/mock-anthropic.ts): day 2 heavy rain, day 3 very hot, and
 // 16.7 mm of estimated rain on 2 rainy days in the past week. IMD's district warnings come from the
-// same stand-in: Patna is orange today, red tomorrow.
+// same stand-in: Patna is orange today, red tomorrow. IMD's measured rainfall for Patna (12.4 mm on
+// the day) replaces the model's estimate of past rain; Nalanda is not in IMD's stand-in lists.
 
 test.describe.configure({ mode: "serial" });
 
@@ -57,17 +58,55 @@ test("a plot with a location shows a 7-day forecast, clearly marked, with warnin
   await expect(page.getByRole("link", { name: "Weather data by Open-Meteo.com" })).toHaveAttribute("href", "https://open-meteo.com/");
 });
 
-test("the plot shows the estimated rain of the past week, marked as an estimate", async ({ page }) => {
+test("IMD's measured rain for the district is shown, against normal, instead of the model's estimate", async ({ page }) => {
   await signIn(page);
   await page.getByRole("link", { name: /Weather farm/ }).click();
   await page.getByRole("link", { name: /Mapped plot/ }).click();
+  const rain = page.getByTestId("imd-rainfall");
+  await expect(rain.getByRole("heading", { name: "Rain measured by IMD in Patna district" })).toBeVisible();
+  const periods = rain.getByTestId("imd-rain-period");
+  await expect(periods).toHaveCount(3);
+  await expect(periods.nth(0)).toContainText("24 hours to 8:30 am");
+  await expect(periods.nth(0)).toContainText("12.4 mm");
+  await expect(periods.nth(0)).toContainText("normal 3.1 mm · Much more than normal · +300% compared with normal");
+  await expect(periods.nth(1)).toContainText(/^Week .+ – .+18\.2 mm/);
+  await expect(periods.nth(1)).toContainText("Less than normal · -20% compared with normal");
+  await expect(periods.nth(2)).toContainText("Since 1 Jun");
+  await expect(periods.nth(2)).toContainText("845.3 mm");
+  await expect(rain).toContainText("Measured by rain gauges of the India Meteorological Department (IMD) and averaged over the district.");
+  await expect(page.getByTestId("recent-rain")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Next 7 days (forecast)" })).toBeVisible();
+});
+
+test("where IMD has no data for the district, the model's estimate of past rain is shown, marked as an estimate", async ({ page }) => {
+  await signIn(page);
+  // A new farm takes its district from the profile.
+  await page.getByRole("link", { name: "My profile and account" }).click();
+  await page.getByRole("link", { name: "Change my details" }).click();
+  await page.getByLabel("District").fill("Nalanda");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page).toHaveURL(/\/profile$/);
+  await page.goto("/farms");
+  await page.getByRole("link", { name: "Add a farm" }).click();
+  await page.getByLabel("Farm name").fill("Nalanda farm");
+  await page.getByRole("button", { name: "Save farm" }).click();
+  await page.getByRole("link", { name: "Add a plot" }).click();
+  await page.getByLabel("Plot name").fill("Nalanda plot");
+  await page.getByLabel(/Plot area/).fill("1");
+  await page.getByRole("button", { name: "Use my location" }).click();
+  await expect(page.getByTestId("location-status")).toHaveText(/Location found/);
+  await page.getByRole("button", { name: "Save plot" }).click();
+  await expect(page.getByRole("heading", { name: "Nalanda plot" })).toBeVisible();
+
+  await expect(page.getByTestId("imd-rainfall")).toHaveCount(0);
+  await expect(page.getByTestId("imd-warnings")).toHaveCount(0);
   const recent = page.getByTestId("recent-rain");
   await expect(recent.getByRole("heading", { name: "Rain in the last 7 days (estimate)" })).toBeVisible();
   await expect(recent).toContainText("About 16.7 mm of rain in all, on 2 rainy days (2.5 mm or more).");
   await expect(recent.getByRole("listitem")).toHaveCount(2);
   await expect(recent.getByRole("listitem").first()).toContainText("12.4 mm");
   await expect(recent).toContainText("not measured by a rain gauge");
-  await expect(page.getByRole("heading", { name: "Next 7 days (forecast)" })).toBeVisible();
+  await expect(page.getByTestId("imd-link")).toBeVisible();
 });
 
 test("IMD's official district warnings come first, with the colour written out, and IMD is linked", async ({ page }) => {
@@ -112,7 +151,8 @@ test("the forecast is shown in Hindi too", async ({ page }) => {
   await page.getByRole("button", { name: /हिंदी/ }).click();
   await expect(page.getByRole("heading", { name: "इस प्लॉट का मौसम" })).toBeVisible();
   await expect(page.getByTestId("weather-day").nth(1).getByTestId("weather-warning")).toHaveText("भारी बारिश की संभावना");
-  await expect(page.getByRole("heading", { name: "पिछले 7 दिनों की बारिश (अनुमान)" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Patna ज़िले में IMD द्वारा मापी गई बारिश" })).toBeVisible();
+  await expect(page.getByTestId("imd-rain-period").nth(0)).toContainText("सामान्य से बहुत ज़्यादा");
   await expect(page.getByTestId("imd-day").nth(0)).toContainText("नारंगी: तैयार रहें");
   await expect(page.getByTestId("imd-day").nth(1)).toContainText("बहुत भारी बारिश");
   await page.getByRole("button", { name: /English/ }).click();

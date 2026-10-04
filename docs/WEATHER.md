@@ -7,7 +7,8 @@ forecast vs model-derived must be kept apart).
 | Shown as | Source | Kind | Where |
 |---|---|---|---|
 | "IMD warnings for {district} district" | India Meteorological Department, district warnings (next 5 days, colour-coded) | **Official** forecast/warning | Plot page (first), farm assistant |
-| "Rain in the last 7 days (estimate)" | Open-Meteo, `past_days=7` of the same request | **Model estimate** of past weather for the area, not a rain gauge | Plot page, farm assistant |
+| "Rain measured by IMD in {district} district" | IMD district rainfall: last 24 hours, last reported week, season so far, each with normal and category | **Observed** (rain gauges, district average) | Plot page, farm assistant |
+| "Rain in the last 7 days (estimate)" | Open-Meteo, `past_days=7` of the same request | **Model estimate** of past weather for the area, not a rain gauge; shown only when IMD rainfall is not available | Plot page, farm assistant |
 | "Next 7 days (forecast)", "Now (estimate)" | Open-Meteo forecast | **Model forecast** | Plot page, farm assistant |
 | "Official forecast from IMD" link | IMD website; IMD's Mausam and Meghdoot apps named | Link only | Plot page, always |
 
@@ -22,8 +23,8 @@ are estimates for a ~5 km area, so the screen says "estimate" and "not measured 
 and the assistant is told the same. Rainy day = 2.5 mm or more (IMD's definition). If any day is
 missing, no total is shown.
 
-To replace it with **observed** rain later: IMD district rainfall (daily actual vs normal) or IMD
-gridded rainfall would be the official source. Keep the label honest about which one is shown.
+When IMD's measured district rainfall is available (below), it replaces this estimate on the plot
+page and for the assistant: two different past-rain figures would confuse.
 
 ## IMD district warnings (off until checked)
 
@@ -68,4 +69,44 @@ differs from what farmers type, decide the pilot district list first (FIELD_READ
    screen with IMD's website for the same day.
 5. Record the check (date, who, what was compared) in docs/FIELD_READINESS.md.
 
-Tests use a stand-in (`tests/support/mock-anthropic.ts`, `GET /imd/warnings`) with the format above.
+## IMD district rainfall (off until checked)
+
+Rain measured by IMD's rain gauges and averaged over the district
+(`src/features/weather/imd-rainfall.ts`), off until `IMD_RAINFALL_URL` is set. Same situation as
+the warnings: the field names follow IMD's district rainfall API **as publicly described**, not
+checked against a real response.
+
+Expected response: a JSON array with one object per district (all values may be strings):
+
+```json
+{ "OBJ_ID": "164", "District": "PATNA", "Date": "2026-10-04",
+  "Daily Actual": "12.40", "Daily Normal": "3.10", "Daily Departure Per": "300%", "Daily Category": "LE",
+  "Week Date": "27-09-2026 To 03-10-2026",
+  "Weekly Actual": "18.20", "Weekly Normal": "22.80", "Weekly Departure Per": "-20%", "Weekly Category": "D",
+  "Cumulative Date": "2026-06-01",
+  "Cumulative Actual": "845.30", "Cumulative Normal": "960.50", "Cumulative Departure Per": "-12%", "Cumulative Category": "N" }
+```
+
+- `Date`: the day the 24-hour total ends (IMD's day is 08:30 to 08:30 IST, shown as "24 hours to
+  8:30 am"). Weekly figures are for IMD's reported week (`Week Date`), which need not end on `Date`;
+  the screen shows its dates. "Cumulative" is shown as "since {Cumulative Date}". Monthly figures are
+  not used.
+- Categories: LE large excess (+60% or more), E excess (+20 to +59%), N normal (−19 to +19%),
+  D deficient (−20 to −59%), LD large deficient (−60 to −99%), NR no rain. Shown in plain words
+  ("Much more than normal" … "No rain").
+- Dates may be `YYYY-MM-DD` or `DD-MM-YYYY`; district names in capitals are shown title-cased.
+
+Safety checks: nothing is shown (the model estimate is shown instead) when the district is missing
+or ambiguous, the report is more than 2 days old, or a value is not understood: an amount that is
+not a plain number, an unknown category, a departure below −100%, an unreadable date, or "no rain"
+with rain. A period IMD gives no figure for (empty, NA) is left out on its own.
+
+### Before switching rainfall on
+
+Same steps as for the warnings, with the district rainfall list and `IMD_RAINFALL_URL`. Also check:
+the meaning of `Date` (end of the 24 hours), the week and season definitions, and whether amounts
+for "trace" rain appear as text. Compare the screen with IMD's district rainfall page for the
+same day.
+
+Tests use stand-ins (`tests/support/mock-anthropic.ts`, `GET /imd/warnings` and `GET /imd/rainfall`)
+with the formats above.

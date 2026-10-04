@@ -10,7 +10,7 @@ import { createServer, type Server } from "node:http";
 // It also stands in for the Open-Meteo forecast API (GET /v1/forecast), with a fixed 7-day forecast
 // from today (India time): day 2 has heavy rain (80 mm), day 3 is very hot (41 °C). Latitude -1
 // gives a server error and -2 an answer in the wrong shape. With past_days it also returns the
-// days before today (MOCK_PAST_RAIN). GET /imd/warnings stands in for IMD's district warnings.
+// days before today (MOCK_PAST_RAIN). GET /imd/warnings and GET /imd/rainfall stand in for IMD's district warnings and rainfall.
 // Farm assistant questions (recognised by its instructions) use the same [fail]/[refuse]/[garbled]
 // markers, plus [unsure] (low confidence, nothing to ask) and [missing] (asks the farmer back).
 
@@ -112,6 +112,42 @@ export function mockImdWarnings(date: string) {
   ];
 }
 
+/**
+ * A list shaped like IMD's district rainfall (see src/features/weather/imd-rainfall.ts) for `date`.
+ * Patna: 12.4 mm on the day (normal 3.1, large excess), 18.2 mm in the week (normal 22.8,
+ * deficient), 845.3 mm since 1 June (normal 960.5, normal). Vaishali: no rain. Aurangabad twice.
+ */
+export function mockImdRainfall(date: string) {
+  const dmy = (iso: string) => iso.split("-").reverse().join("-");
+  const shift = (n: number) => new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+  const common = {
+    Date: date,
+    "Week Date": `${dmy(shift(-7))} To ${dmy(shift(-1))}`,
+    "Cumulative Date": `${date.slice(0, 4)}-06-01`,
+    "Monthly Date": "01-09-2026 To 30-09-2026",
+    "Monthly Actual": "210.00",
+    "Monthly Normal": "250.40",
+    "Monthly Departure Per": "-16%",
+    "Monthly Category": "N",
+  };
+  const dry = {
+    "Daily Actual": "0.00", "Daily Normal": "3.00", "Daily Departure Per": "-100%", "Daily Category": "NR",
+    "Weekly Actual": "0.00", "Weekly Normal": "20.00", "Weekly Departure Per": "-100%", "Weekly Category": "NR",
+    "Cumulative Actual": "700.00", "Cumulative Normal": "900.00", "Cumulative Departure Per": "-22%", "Cumulative Category": "D",
+  };
+  return [
+    {
+      OBJ_ID: "101", District: "PATNA", ...common,
+      "Daily Actual": "12.40", "Daily Normal": "3.10", "Daily Departure Per": "300%", "Daily Category": "LE",
+      "Weekly Actual": "18.20", "Weekly Normal": "22.80", "Weekly Departure Per": "-20%", "Weekly Category": "D",
+      "Cumulative Actual": "845.30", "Cumulative Normal": "960.50", "Cumulative Departure Per": "-12%", "Cumulative Category": "N",
+    },
+    { OBJ_ID: "102", District: "VAISHALI", ...common, ...dry },
+    { OBJ_ID: "103", District: "AURANGABAD", ...common, ...dry },
+    { OBJ_ID: "104", District: "AURANGABAD", ...common, ...dry },
+  ];
+}
+
 function indiaToday() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
@@ -142,6 +178,11 @@ export async function startMockAnthropic(port = 0): Promise<{ server: Server; ur
     let raw = "";
     req.on("data", (chunk) => (raw += chunk));
     req.on("end", () => {
+      if (req.method === "GET" && req.url?.startsWith("/imd/rainfall")) {
+        requests.push({ path: req.url, body: {} });
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify(mockImdRainfall(indiaToday())));
+      }
       if (req.method === "GET" && req.url?.startsWith("/imd/warnings")) {
         requests.push({ path: req.url, body: {} });
         res.writeHead(200, { "content-type": "application/json" });

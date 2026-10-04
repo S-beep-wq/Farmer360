@@ -310,10 +310,21 @@ follows IMD's public description and must be checked against one real response f
 (docs/WEATHER.md, "Before switching it on"). Recent rain is a model estimate; observed rain from
 IMD is a later option.
 
+## Slice 21 — IMD observed rainfall ✅ complete
+
+| Task | Status |
+|---|---|
+| IMD district rainfall adapter: last 24 hours, last reported week and season so far, each with normal, % departure and IMD category in plain words; strict checks | ✅ (off until `IMD_RAINFALL_URL` is set) |
+| Plot page: "Rain measured by IMD in {district} district" (rain gauges, district average); replaces the model's estimate when available | ✅ |
+| Farm assistant gets the measured rain (official, district-wide) instead of the estimate | ✅ |
+| Unit, integration and end-to-end tests (stand-in for IMD); docs/WEATHER.md | ✅ |
+
+No migration. **Not switched on**, for the same reason as the warnings: check one real IMD
+response first (docs/WEATHER.md).
+
 ## Next slices (proposed, not started)
 
-1. Observed rainfall from IMD (district daily rainfall) once IMD access exists, replacing the
-   model estimate for past days.
+None proposed beyond the pilot blockers in docs/FIELD_READINESS.md section 2.
 
 ## Open questions for the product owner
 

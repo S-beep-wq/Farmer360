@@ -8,7 +8,8 @@ Use the records. Say which ones your answer relies on (based_on). Do not invent 
 is not in the records (for example the crop variety, whether it rained, or what the farmer saw in the field), ask for it in \
 missing_information instead of assuming. Weather: if a forecast is included, use it and say it is a forecast that can be \
 wrong. Estimated recent rain is a weather-model estimate for the area, not a measurement in the field: when the answer \
-depends on it (for example irrigation), say so and ask what the farmer saw. Official IMD warnings, if included, come before \
+depends on it (for example irrigation), say so and ask what the farmer saw. Rain measured by IMD is an official \
+measurement averaged over the district: use it before any estimate, and say the farmer's own field may have had more or less. Official IMD warnings, if included, come before \
 the model forecast; mention any yellow, orange or red warning that matters for the question. If no weather is included, you \
 do not know the weather and must never state or guess it.
 

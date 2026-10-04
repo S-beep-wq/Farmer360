@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { todayInIndia } from "@/features/crops/dates";
 import { loadFarmContext } from "@/features/farm-assistant/repository";
 import { withWeather } from "@/features/farm-assistant/weather";
-import { fetchImdWarnings, isImdEnabled } from "@/features/weather/imd-provider";
+import { fetchImdRainfall, fetchImdWarnings, isImdEnabled } from "@/features/weather/imd-provider";
 import { fetchForecast } from "@/features/weather/provider";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
@@ -56,6 +56,7 @@ beforeAll(async () => {
 afterAll(async () => {
   delete process.env.WEATHER_API_URL;
   delete process.env.IMD_API_URL;
+  delete process.env.IMD_RAINFALL_URL;
   mock.server.close();
   await deleteTestUsers(PHONES);
 });
@@ -131,5 +132,33 @@ describe("the farm assistant's weather", () => {
   it("for the whole farm, uses the plots that have a location", async () => {
     const context = await withWeather((await loadFarmContext(server(a), opts))!);
     expect(context.weather.map((w) => w.plot)).toEqual(["Pinned plot"]);
+  });
+});
+
+describe("IMD measured rainfall", () => {
+  it("is off, without any request, unless IMD_RAINFALL_URL is set", async () => {
+    delete process.env.IMD_RAINFALL_URL;
+    const before = mock.requests.length;
+    expect(await fetchImdRainfall({ district: "Patna", state: "Bihar" })).toBeNull();
+    expect(mock.requests.length).toBe(before);
+  });
+
+  it("gets the district's measured rain when set up, and nothing for an unknown district or when IMD is down", async () => {
+    process.env.IMD_RAINFALL_URL = `${mock.url}/imd/rainfall`;
+    const patna = await fetchImdRainfall({ district: "Patna", state: "Bihar" });
+    expect(patna).toMatchObject({ source: "IMD", district: "Patna", date: TODAY, day: { actualMm: 12.4, category: "LE" } });
+    expect(mock.requests.at(-1)!.path).toBe("/imd/rainfall");
+    expect(await fetchImdRainfall({ district: "Nowhere", state: "Bihar" })).toBeNull();
+    process.env.IMD_RAINFALL_URL = "http://127.0.0.1:1/imd";
+    expect(await fetchImdRainfall({ district: "Patna", state: "Bihar" })).toBeNull();
+    process.env.IMD_RAINFALL_URL = `${mock.url}/imd/rainfall`;
+  });
+
+  it("replaces the model's estimate of recent rain in the farm assistant's context", async () => {
+    process.env.IMD_RAINFALL_URL = `${mock.url}/imd/rainfall`;
+    const context = await withWeather((await loadFarmContext(server(a), { ...opts, cropCycleId: pinnedCycle }))!);
+    expect(context.imdRain).toMatchObject({ district: "Vaishali", day: { actualMm: 0, category: "NR" } });
+    expect(context.weather[0].recent).toBeNull();
+    expect(context.weather[0].days).toHaveLength(7);
   });
 });

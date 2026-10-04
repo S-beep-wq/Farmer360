@@ -1,5 +1,6 @@
 import type { ForecastDay, RecentRain } from "@/features/weather/forecast";
 import type { ImdWarnings } from "@/features/weather/imd";
+import type { ImdRainfall, ImdRainPeriod } from "@/features/weather/imd-rainfall";
 import type { WeatherPoint } from "@/features/weather/location";
 import type { Locale } from "@/lib/i18n";
 
@@ -33,6 +34,8 @@ export type FarmContext = {
   weather: { plot: string; days: ForecastDay[]; recent?: RecentRain | null }[];
   /** IMD's official warnings for the farmer's district, when available. */
   imd?: ImdWarnings | null;
+  /** IMD's measured rainfall for the farmer's district, when available (then `recent` is left out). */
+  imdRain?: ImdRainfall | null;
   crops: ContextCrop[];
   activities: { date: string; crop: string; type: string }[];
   observations: { date: string; crop: string; status: string; note: string | null }[];
@@ -82,14 +85,36 @@ function imdSection(c: FarmContext): string[] {
   ];
 }
 
+function rainPeriodLine(label: string, p: ImdRainPeriod): string {
+  const parts = [
+    `${p.actualMm} mm`,
+    p.normalMm !== null ? `normal ${p.normalMm} mm` : null,
+    p.departurePct !== null ? `${p.departurePct > 0 ? "+" : ""}${p.departurePct}% compared with normal` : null,
+    p.category ? `IMD category ${p.category}` : null,
+  ];
+  return `- ${label}: ${parts.filter(Boolean).join(", ")}`;
+}
+
+function imdRainSection(c: FarmContext): string[] {
+  const r = c.imdRain;
+  if (!r) return [];
+  return [
+    `Rain measured by IMD rain gauges, averaged over ${r.district} district (the farmer's field may differ). Categories: LE large excess, E excess, N normal, D deficient, LD large deficient, NR no rain:`,
+    ...(r.day ? [rainPeriodLine(`24 hours to 08:30 on ${r.date}`, r.day)] : []),
+    ...(r.week ? [rainPeriodLine(r.week.from && r.week.to ? `Week ${r.week.from} to ${r.week.to}` : "Last reported week", r.week)] : []),
+    ...(r.season ? [rainPeriodLine(r.season.from ? `Since ${r.season.from}` : "Season so far", r.season)] : []),
+  ];
+}
+
 function weatherSection(c: FarmContext): string[] {
   if (c.weather.length === 0) {
-    return c.imd
-      ? [...imdSection(c), "Model forecast: not available to you. Do not guess the weather beyond the IMD warnings."]
+    return c.imd || c.imdRain
+      ? [...imdSection(c), ...imdRainSection(c), "Model forecast: not available to you. Do not guess the weather beyond the IMD information."]
       : ["Weather: not available to you. Do not guess today's weather or forecast."];
   }
   return [
     ...imdSection(c),
+    ...imdRainSection(c),
     "Weather forecast from weather models (Open-Meteo). It is a forecast for the area, not a measurement, and can be wrong, especially beyond 3 days:",
     ...c.weather.flatMap((w) => [`- Plot "${w.plot}":`, ...(w.recent ? [recentLine(w.recent)] : []), ...w.days.map((d) => `  - ${weatherLine(d)}`)]),
   ];

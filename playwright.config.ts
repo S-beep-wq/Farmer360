@@ -44,8 +44,9 @@ export default defineConfig({
       ANTHROPIC_BASE_URL: `http://127.0.0.1:${MOCK_ANTHROPIC_PORT}`,
       // Weather forecasts come from the same stand-in.
       WEATHER_API_URL: `http://127.0.0.1:${MOCK_ANTHROPIC_PORT}`,
-      // So do IMD's district warnings (switched on here; off unless configured in the app).
+      // So do IMD's district warnings and rainfall (switched on here; off unless configured in the app).
       IMD_API_URL: `http://127.0.0.1:${MOCK_ANTHROPIC_PORT}/imd/warnings`,
+      IMD_RAINFALL_URL: `http://127.0.0.1:${MOCK_ANTHROPIC_PORT}/imd/rainfall`,
     },
     timeout: 120_000,
   },

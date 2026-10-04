@@ -88,7 +88,32 @@ export function districtKey(name: string): string {
   return name.toLowerCase().normalize("NFKD").replace(/[^a-z]/g, "");
 }
 
-function addDays(date: string, n: number): string {
+/**
+ * The one entry for the district in an IMD district list (matched by name, and by `State` when the
+ * list gives it), or null when the list is not an array or the district is missing or ambiguous.
+ */
+export function findDistrictEntry(json: unknown, place: { district: string; state: string }): unknown {
+  const list = imdWarningsSchema.safeParse(json);
+  if (!list.success) return null;
+  const wanted = districtKey(place.district);
+  const matches = list.data.filter(
+    (e) => typeof e === "object" && e !== null && typeof (e as { District?: unknown }).District === "string" && districtKey((e as { District: string }).District) === wanted,
+  );
+  const inState = matches.filter((e) => {
+    const state = (e as { State?: unknown }).State;
+    return typeof state !== "string" || districtKey(state) === districtKey(place.state);
+  });
+  return inState.length === 1 ? inState[0] : null;
+}
+
+/** IMD often writes names in capitals ("EAST CHAMPARAN"); show them as "East Champaran". */
+export function displayName(name: string): string {
+  const trimmed = name.trim().replace(/\s+/g, " ");
+  if (trimmed !== trimmed.toUpperCase()) return trimmed;
+  return trimmed.toLowerCase().replace(/(^|[\s-])([a-z])/g, (_, sep: string, ch: string) => sep + ch.toUpperCase());
+}
+
+export function addDays(date: string, n: number): string {
   return new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 }
 
@@ -114,18 +139,9 @@ function parseDay(warnings: string, colour: string, date: string): ImdDay | null
  * response names the state), was issued too long ago, or anything is not in the expected format.
  */
 export function normalizeImdWarnings(json: unknown, place: { district: string; state: string }, today: string): ImdWarnings | null {
-  const list = imdWarningsSchema.safeParse(json);
-  if (!list.success) return null;
-  const wanted = districtKey(place.district);
-  const matches = list.data.filter(
-    (e) => typeof e === "object" && e !== null && typeof (e as { District?: unknown }).District === "string" && districtKey((e as { District: string }).District) === wanted,
-  );
-  const inState = matches.filter((e) => {
-    const state = (e as { State?: unknown }).State;
-    return typeof state !== "string" || districtKey(state) === districtKey(place.state);
-  });
-  if (inState.length !== 1) return null;
-  const entry = entrySchema.safeParse(inState[0]);
+  const found = findDistrictEntry(json, place);
+  if (found === null) return null;
+  const entry = entrySchema.safeParse(found);
   if (!entry.success) return null;
   const e = entry.data;
   const issuedOn = e.Date.slice(0, 10);
@@ -144,5 +160,5 @@ export function normalizeImdWarnings(json: unknown, place: { district: string; s
     if (!day) return null;
     if (day.date >= today) days.push(day);
   }
-  return { source: "IMD", district: e.District.trim(), issuedOn, days };
+  return { source: "IMD", district: displayName(e.District), issuedOn, days };
 }
