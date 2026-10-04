@@ -15,7 +15,7 @@ import { isDeletionConfirmed } from "./rules";
  * user (and, by cascade, all farmer data) → sign out. Safe to run again if a step fails.
  */
 export async function deleteAccountAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireUser({ skipConsent: true });
   if (!isDeletionConfirmed(formData)) {
     return { fieldErrors: { confirm: "confirmDeletion" } };
   }

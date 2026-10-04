@@ -36,14 +36,30 @@ export async function sendCode(page: Page, localPhone: string) {
   throw new Error("Could not request a login code");
 }
 
-/** Logs in through the real phone + OTP flow, in English. */
-export async function logIn(page: Page, phone: string) {
+/** Ticks the box on the data-use consent screen and agrees. */
+export async function acceptNotice(page: Page) {
+  await expect(page).toHaveURL(/\/consent$/);
+  await page.getByLabel("I have read this and I agree to Kisan 360 using my data in this way").check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
+  // Server Action redirects are client-side navigations (no "load" event), so assert on the URL.
+  await expect(page).not.toHaveURL(/\/consent$/);
+}
+
+/**
+ * Logs in through the real phone + OTP flow, in English. The first time a test user logs in, the
+ * app asks them to accept the data-use notice; this accepts it unless `acceptNotice` is false.
+ */
+export async function logIn(page: Page, phone: string, { acceptNotice: accept = true } = {}) {
   await page.goto("/login");
   await switchToEnglish(page);
   await sendCode(page, localNumber(phone));
   await expect(page.getByText(/^We sent a 6-digit code to \+91 \d{5} \d{5}$/)).toBeVisible();
   await page.getByLabel("Code from SMS").fill(TEST_OTP);
   await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).not.toHaveURL(/\/login$/);
+  if (accept && new URL(page.url()).pathname === "/consent") {
+    await acceptNotice(page);
+  }
 }
 
 /** Taps points on a Leaflet map, as offsets in pixels from its centre. */

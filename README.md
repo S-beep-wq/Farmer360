@@ -21,7 +21,8 @@ plot and season from the farmer's own past seasons, buyers and support, plus sou
 estimates once the team loads them (see `docs/CROP_REFERENCES.md`) → AI crop-health help on
 crop photos and a farm assistant that answers questions from the farm's records (both only when
 `ANTHROPIC_API_KEY` is set) → 7-day weather forecast on each plot with a location (Open-Meteo),
-also given to the farm assistant.
+also given to the farm assistant. Before using the app, everyone reads a short data-use notice
+and agrees to it once (the full notice is at `/privacy`, readable before logging in).
 The interface is in Hindi by default, with English available.
 
 ## Stack
@@ -40,7 +41,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900027`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900029`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run
@@ -109,6 +110,9 @@ repository (Supabase queries under the farmer's session) → Postgres with RLS.
 - Optional: set `ANTHROPIC_API_KEY` (server only) to turn on AI crop-health help and the farm assistant. Without it the
   feature is hidden. End-to-end tests use a local stand-in API instead (`tests/support/mock-anthropic.ts`).
   **Never** set `SUPABASE_SECRET_KEY` there; the app does not use it.
+- Set `PRIVACY_CONTACT` (server only) to the organisation running Kisan 360 and its grievance
+  contact; it is shown on the data-use notice (`/privacy`). When the notice text changes, bump
+  `NOTICE_VERSION` in `src/features/consent/constants.ts` so everyone agrees to the new version.
 - Configure a real SMS provider for phone auth in the hosted Supabase project, and do not
   configure test OTP numbers there.
 - Weather uses Open-Meteo, free only for non-commercial use: for a commercial launch take an

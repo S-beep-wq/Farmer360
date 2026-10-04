@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.18 |
+| **Version** | 0.19 |
 | **Database** | PostgreSQL / Supabase (+ PostGIS) |
 | **Status** | MVP Foundation |
 
@@ -1022,6 +1022,32 @@ created_at
 - Deleted with the farmer's account (cascade). Retention beyond that is still to be decided.
 - Crop-photo analyses are stored in `crop_health_analyses` (section 10a), not here.
 
+## 21a. `user_consents` (v0.19)
+
+Agreement to the data-use notice (PRODUCT_SPEC.md section 18: "Obtain appropriate consent for
+data use"). One row per login and notice version. It belongs to the login (`auth.users`), not to
+a farmer or buyer, because the notice is accepted before choosing a role.
+
+```text
+id
+user_id          (defaults to the signed-in user; references auth.users, cascade on delete)
+notice_version   (e.g. 2026-10-04; NOTICE_VERSION in src/features/consent/constants.ts)
+locale           (hi / en: the language the notice was shown in)
+accepted_at      (set by the database)
+unique (user_id, notice_version)
+```
+
+- RLS: a user reads and inserts only their own rows. Only `notice_version` and `locale` can be
+  given on insert, so who agreed and when cannot be forged. There is no update or delete grant:
+  the record of what was agreed to is kept until the account is deleted (cascade).
+- The application asks everyone who has no row for the current `NOTICE_VERSION` to agree before
+  any other screen (`requireUser` in `src/lib/auth.ts`). Changing the notice text means a new
+  version, so everyone is asked again; earlier rows stay as history.
+- Withdrawing consent is done by deleting the account (section 3), which removes everything.
+- The consent check is in the application, not in every RLS policy: RLS already limits each
+  person to their own data, and someone who calls the API directly can only reach that. Adding
+  consent to every policy would add a lookup to every query for no extra protection of others.
+
 ## 21. Relationships
 
 Core relationship:
@@ -1209,6 +1235,7 @@ Migrations live in `supabase/migrations/`. Applied so far:
 | `20261003110337_slice15_crop_health_ai.sql` | `crop_health_analyses` (limits, feedback-only updates); RLS. |
 | `20261003114625_slice16_farm_assistant.sql` | `ai_interactions` (metadata only, daily limit, feedback-only updates); RLS. |
 | `20261003122004_slice18_crop_references.sql` | `crop_references`, `crop_reference_texts`; `import_crop_reference()` (service role); read-only RLS. |
+| `20261004055438_slice19_data_use_consent.sql` | `user_consents` (insert-only, version and language only); RLS. |
 
 
 Database migrations must be version-controlled.

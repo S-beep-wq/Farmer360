@@ -35,6 +35,8 @@ export const TEST_PHONES = {
   e2eA11yFarmer: "+919999900025",
   e2eA11yBuyer: "+919999900026",
   perfFarmer: "+919999900027",
+  e2eConsent: "+919999900028",
+  e2eConsentDelete: "+919999900029",
 } as const;
 
 function env(name: string): string {

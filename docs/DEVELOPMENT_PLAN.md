@@ -276,12 +276,27 @@ district (docs/CROP_REFERENCES.md). Until then planning works as in slice 14.
 | `docs/FIELD_READINESS.md`: results, pilot blockers (people and decisions), field test script, known limitations | ✅ |
 
 The pilot is blocked on the items in docs/FIELD_READINESS.md section 2 (district, Hindi review,
-verified data, data-use notice, SMS/DLT, production configuration).
+verified data, legal review of the data-use notice, SMS/DLT, production configuration).
+
+## Slice 19 — Data-use notice and consent ✅ complete
+
+| Task | Status |
+|---|---|
+| Migration: `user_consents` (one row per login and notice version; insert-only, version and language only; RLS) | ✅ |
+| `/privacy`: the full notice in Hindi and English — what is kept, why, who sees it, outside companies (SMS, Anthropic, Open-Meteo, maps, hosting), how long, choices, complaints; readable before logging in (linked from login and profile) | ✅ |
+| `/consent`: short summary, link to the full notice, tick box + "Agree and continue"; "Log out" and "Delete my account" for someone who does not agree | ✅ |
+| Gate: every page and action that needs a signed-in user (`requireUser`, and so `requireFarmer`/`requireBuyer`) sends anyone without consent to the current version to `/consent`; only the consent screen and account deletion are exempt | ✅ |
+| Changing the notice: bump `NOTICE_VERSION`; everyone is asked again, with "this has changed" | ✅ |
+| Grievance contact from `PRIVACY_CONTACT` (server env) | ✅ |
+| Unit, integration and end-to-end tests; consent and notice screens in the accessibility check | ✅ |
+
+**Still needed before the pilot**: legal review of the notice text against the DPDP Act 2023
+and its rules, the operator's name and grievance contact in `PRIVACY_CONTACT`, and native Hindi
+review (docs/FIELD_READINESS.md item 4).
 
 ## Next slices (proposed, not started)
 
-1. Data-use notice and consent screen, once the text is agreed (docs/FIELD_READINESS.md item 4).
-2. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
+1. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
    a second, official source.
 
 ## Open questions for the product owner

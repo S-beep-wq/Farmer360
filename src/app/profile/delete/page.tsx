@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 // Uses requireUser, not requireFarmer: this page must also work after deletion was started
 // (requireFarmer sends such farmers here) and for someone who never finished their profile.
 export default async function DeleteAccountPage() {
-  const user = await requireUser();
+  const user = await requireUser({ skipConsent: true });
   const supabase = await createClient();
   const [{ t }, farmer, buyer] = await Promise.all([getServerMessages(), getFarmerForUser(supabase, user.id), getBuyerForUser(supabase, user.id)]);
   const unfinished = Boolean(farmer?.deletion_requested_at);

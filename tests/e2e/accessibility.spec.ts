@@ -6,7 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { todayInIndia } from "../../src/features/crops/dates";
 import { TEST_PHONES } from "../support/supabase";
 
-import { logIn, logInWithProfile } from "./helpers";
+import { acceptNotice, logIn, logInWithProfile } from "./helpers";
 
 // Field-readiness: an automated accessibility check (axe-core, WCAG 2.1 A and AA, plus 2.2 AA such as target size) of every main
 // screen, for a farmer with real-looking data and for a buyer, in English and in Hindi.
@@ -51,7 +51,15 @@ function report(findings: Finding[]) {
 test("signed-out and onboarding screens", async ({ page }) => {
   await page.goto("/login");
   const findings = await audit(page, "login");
-  await logIn(page, TEST_PHONES.e2eA11yFarmer);
+  await page.goto("/privacy");
+  findings.push(...(await audit(page, "privacy notice")));
+  await logIn(page, TEST_PHONES.e2eA11yFarmer, { acceptNotice: false });
+  await page.waitForURL(/\/consent$/);
+  findings.push(...(await audit(page, "consent")));
+  await page.getByRole("button", { name: "Agree and continue" }).click();
+  await expect(page.getByText("Tick the box to agree.")).toBeVisible();
+  findings.push(...(await audit(page, "consent (error)")));
+  await acceptNotice(page);
   await page.waitForURL(/\/onboarding$/);
   findings.push(...(await audit(page, "onboarding")));
   await page.goto("/onboarding/buyer");
@@ -149,6 +157,7 @@ test("farmer screens (Hindi)", async ({ page }) => {
     ["crop (hi)", pages.crop],
     ["observation (hi)", pages.observation],
     ["assistant (hi)", "/assistant"],
+    ["privacy notice (hi)", "/privacy"],
   ]);
   await page.getByRole("button", { name: /English/ }).click();
   expect(findings, report(findings)).toEqual([]);

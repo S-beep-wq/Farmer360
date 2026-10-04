@@ -485,6 +485,19 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"user_consents": {
+                  Row: {
+                    "accepted_at": string,"id": string,"locale": string,"notice_version": string,"user_id": string
+                  }
+                  Insert: {
+                    "accepted_at"?: string,"id"?: string,"locale": string,"notice_version": string,"user_id"?: string
+                  }
+                  Update: {
+                    "accepted_at"?: string,"id"?: string,"locale"?: string,"notice_version"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {

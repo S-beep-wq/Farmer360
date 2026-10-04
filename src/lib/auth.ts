@@ -3,6 +3,8 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
+import { NOTICE_VERSION } from "@/features/consent/constants";
+import { hasAcceptedNotice } from "@/features/consent/repository";
 import { getFarmerForUser } from "@/features/farmer/repository";
 import { getBuyerForUser } from "@/features/market/repository";
 import { createClient } from "@/lib/supabase/server";
@@ -23,10 +25,24 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return { id: data.claims.sub, phone };
 });
 
-export async function requireUser(): Promise<CurrentUser> {
+/** Whether the user has accepted the current data-use notice. Cached for one request. */
+export const hasAcceptedCurrentNotice = cache(async (userId: string) => {
+  const supabase = await createClient();
+  return hasAcceptedNotice(supabase, userId, NOTICE_VERSION);
+});
+
+/**
+ * The signed-in user. Sends signed-out visitors to log in, and anyone who has not accepted the
+ * current data-use notice to /consent. Only the consent screen itself and leaving (account
+ * deletion) pass `skipConsent`, so someone who does not agree can still delete their account.
+ */
+export async function requireUser({ skipConsent = false }: { skipConsent?: boolean } = {}): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
+  }
+  if (!skipConsent && !(await hasAcceptedCurrentNotice(user.id))) {
+    redirect("/consent");
   }
   return user;
 }

@@ -34,6 +34,9 @@ export default async function BuyerProfilePage() {
       <LinkButton href="/buyer/profile/edit" variant="secondary">
         {t.account.editLink}
       </LinkButton>
+      <Link href="/privacy" className="w-fit text-lg font-semibold text-green-800 underline underline-offset-4">
+        {t.privacy.link}
+      </Link>
       <section className="flex flex-col gap-3 border-t-2 border-stone-200 pt-6">
         <h2 className="text-2xl font-semibold text-stone-900">{t.account.deleteTitle}</h2>
         <Link

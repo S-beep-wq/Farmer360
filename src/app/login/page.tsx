@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Page, PageTitle } from "@/components/ui/layout";
@@ -19,6 +20,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <p className="text-xl text-green-800">{t.app.tagline}</p>
       <PageTitle>{t.login.title}</PageTitle>
       <LoginForm t={t} />
+      <Link href="/privacy" className="w-fit text-lg font-semibold text-green-800 underline underline-offset-4">
+        {t.privacy.link}
+      </Link>
     </Page>
   );
 }

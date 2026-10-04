@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { getCurrentUser, getRoleHome } from "@/lib/auth";
+import { getRoleHome, requireUser } from "@/lib/auth";
 
 /** Sends each visitor to the right first screen. */
 export default async function Home() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const user = await requireUser();
   redirect(await getRoleHome(user.id));
 }
