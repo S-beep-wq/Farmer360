@@ -56,8 +56,11 @@ export async function logIn(page: Page, phone: string, { acceptNotice: accept = 
   await expect(page.getByText(/^We sent a 6-digit code to \+91 \d{5} \d{5}$/)).toBeVisible();
   await page.getByLabel("Code from SMS").fill(TEST_OTP);
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).not.toHaveURL(/\/login$/);
-  if (accept && new URL(page.url()).pathname === "/consent") {
+  // Wait for the next page's heading: the URL can show an in-between page (e.g. /onboarding) before
+  // the server's redirect to /consent arrives, but only the final page is ever rendered.
+  const heading = page.getByRole("heading", { level: 1 });
+  await expect(heading).not.toHaveText("Log in with your mobile number");
+  if (accept && (await heading.textContent()) === "Before you start") {
     await acceptNotice(page);
   }
 }

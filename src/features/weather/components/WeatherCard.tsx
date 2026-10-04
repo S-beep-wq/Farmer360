@@ -1,9 +1,35 @@
 import { formatDate } from "@/features/crops/dates";
 import { format, type Locale, type Messages } from "@/lib/i18n";
 
-import { dayWarnings, rainCategory, type Forecast } from "../forecast";
+import { dayWarnings, rainCategory, RAINY_DAY_MM, type Forecast, type RecentRain } from "../forecast";
 
 const number = (locale: Locale) => new Intl.NumberFormat(locale === "hi" ? "hi-IN" : "en-IN", { maximumFractionDigits: 1 });
+
+/** Estimated rain on the past days: total, rainy days and which days, clearly marked as an estimate. */
+function RecentRainSection({ t, locale, recent }: { t: Messages; locale: Locale; recent: RecentRain }) {
+  const n = number(locale);
+  const rainy = recent.days.filter((d) => d.rainMm !== null && d.rainMm >= RAINY_DAY_MM);
+  return (
+    <section className="flex flex-col gap-2 rounded-2xl border-2 border-sky-200 bg-sky-50 p-4" data-testid="recent-rain">
+      <h3 className="text-xl font-semibold text-stone-900">{t.weather.recentTitle}</h3>
+      {recent.totalMm === null ? (
+        <p className="text-lg text-stone-800">{t.weather.recentUnknown}</p>
+      ) : recent.rainyDays === 0 ? (
+        <p className="text-lg text-stone-800">{t.weather.recentNone}</p>
+      ) : (
+        <p className="text-lg text-stone-800">{format(t.weather.recentTotal, { mm: n.format(recent.totalMm), days: recent.rainyDays })}</p>
+      )}
+      {rainy.length > 0 ? (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-base text-stone-800">
+          {rainy.map((d) => (
+            <li key={d.date}>{format(t.weather.recentDay, { date: formatDate(d.date, locale), mm: n.format(d.rainMm ?? 0) })}</li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="text-base text-stone-700">{t.weather.recentNote}</p>
+    </section>
+  );
+}
 
 /** The 7-day forecast for a plot, clearly marked as a forecast with its source and time. */
 export function WeatherCard({ t, locale, forecast, today }: { t: Messages; locale: Locale; forecast: Forecast; today: string }) {
@@ -19,6 +45,8 @@ export function WeatherCard({ t, locale, forecast, today }: { t: Messages; local
 
   return (
     <div className="flex flex-col gap-3" data-testid="weather">
+      {forecast.recent ? <RecentRainSection t={t} locale={locale} recent={forecast.recent} /> : null}
+      <h3 className="text-xl font-semibold text-stone-900">{t.weather.forecastTitle}</h3>
       {forecast.now ? (
         <p className="text-lg font-medium text-stone-900" data-testid="weather-now">
           {format(t.weather.now, { temperature: deg(forecast.now.temperatureC), kind: t.weatherKinds[forecast.now.kind] })}

@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { contextText, type FarmContext } from "@/features/farm-assistant/context";
-import { dayWarnings, normalizeOpenMeteo, rainCategory, weatherKind } from "@/features/weather/forecast";
+import { dayWarnings, normalizeOpenMeteo, rainCategory, recentRain, weatherKind } from "@/features/weather/forecast";
+import { normalizeImdWarnings } from "@/features/weather/imd";
 import { weatherPoint } from "@/features/weather/location";
 import { forecastUrl } from "@/features/weather/provider";
 
-import { mockForecast } from "../support/mock-anthropic";
+import { mockForecast, mockImdWarnings } from "../support/mock-anthropic";
 
 const FETCHED = "2026-10-03T05:00:00.000Z";
 
@@ -29,7 +30,7 @@ describe("weatherKind", () => {
 
 describe("normalizeOpenMeteo", () => {
   it("turns a provider response into 7 forecast days and a 'now' estimate", () => {
-    const f = normalizeOpenMeteo(mockForecast("2026-10-03"), FETCHED)!;
+    const f = normalizeOpenMeteo(mockForecast("2026-10-03"), FETCHED, "2026-10-03")!;
     expect(f.source).toBe("Open-Meteo");
     expect(f.fetchedAt).toBe(FETCHED);
     expect(f.now).toEqual({ time: "2026-10-03T10:00", kind: "PARTLY_CLOUDY", temperatureC: 31.2, windKmh: 9.4 });
@@ -41,11 +42,35 @@ describe("normalizeOpenMeteo", () => {
     const json = mockForecast("2026-10-03");
     json.daily.precipitation_probability_max[0] = null as unknown as number;
     delete (json as { current?: unknown }).current;
-    const f = normalizeOpenMeteo(json, FETCHED)!;
+    const f = normalizeOpenMeteo(json, FETCHED, "2026-10-03")!;
     expect(f.now).toBeNull();
     expect(f.days[0].rainChance).toBeNull();
-    expect(normalizeOpenMeteo({ daily: "nope" }, FETCHED)).toBeNull();
-    expect(normalizeOpenMeteo({ daily: { ...json.daily, time: [] } }, FETCHED)).toBeNull();
+    expect(normalizeOpenMeteo({ daily: "nope" }, FETCHED, "2026-10-03")).toBeNull();
+    expect(normalizeOpenMeteo({ daily: { ...json.daily, time: [] } }, FETCHED, "2026-10-03")).toBeNull();
+  });
+});
+
+describe("recent rain (past days, estimated)", () => {
+  it("splits the days before today from the forecast", () => {
+    const f = normalizeOpenMeteo(mockForecast("2026-10-03", 7), FETCHED, "2026-10-03")!;
+    expect(f.days).toHaveLength(7);
+    expect(f.days[0].date).toBe("2026-10-03");
+    expect(f.recent!.days.map((d) => d.date)).toEqual(["2026-09-26", "2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"]);
+    expect(f.recent).toMatchObject({ totalMm: 16.7, rainyDays: 2 });
+  });
+
+  it("has no recent rain when the provider sends no past days", () => {
+    expect(normalizeOpenMeteo(mockForecast("2026-10-03"), FETCHED, "2026-10-03")!.recent).toBeNull();
+  });
+
+  it("counts rainy days from 2.5 mm (IMD) and gives no total when a day is missing", () => {
+    expect(recentRain([{ date: "a", rainMm: 2.4 }, { date: "b", rainMm: 2.5 }, { date: "c", rainMm: 0.1 }])).toEqual({
+      days: [{ date: "a", rainMm: 2.4 }, { date: "b", rainMm: 2.5 }, { date: "c", rainMm: 0.1 }],
+      totalMm: 5,
+      rainyDays: 1,
+    });
+    expect(recentRain([{ date: "a", rainMm: 30 }, { date: "b", rainMm: null }])).toMatchObject({ totalMm: null, rainyDays: 1 });
+    expect(recentRain([])).toBeNull();
   });
 });
 
@@ -102,6 +127,7 @@ describe("forecastUrl", () => {
     expect(free.searchParams.get("latitude")).toBe("25.6");
     expect(free.searchParams.get("timezone")).toBe("Asia/Kolkata");
     expect(free.searchParams.get("forecast_days")).toBe("7");
+    expect(free.searchParams.get("past_days")).toBe("7");
     expect(free.searchParams.has("apikey")).toBe(false);
 
     process.env.OPEN_METEO_API_KEY = "key";
@@ -129,13 +155,33 @@ describe("weather in the farm assistant's context", () => {
   };
 
   it("labels a forecast as a forecast and never sends the plot's location", () => {
-    const days = normalizeOpenMeteo(mockForecast("2026-10-03"), FETCHED)!.days;
+    const days = normalizeOpenMeteo(mockForecast("2026-10-03"), FETCHED, "2026-10-03")!.days;
     const text = contextText({ ...base, weather: [{ plot: "Back plot", days }] }, "Should I irrigate?");
     expect(text).toContain("Weather forecast from weather models (Open-Meteo). It is a forecast for the area, not a measurement, and can be wrong");
     expect(text).toContain('- Plot "Back plot":');
     expect(text).toContain("2026-10-04: rain, rain 80.4 mm (90% chance of rain), 23.8–29.4°C, wind up to 30.1 km/h");
     expect(text).not.toContain("25.6");
     expect(text).not.toContain("85.15");
+  });
+
+  it("gives the estimated recent rain, labelled as an estimate", () => {
+    const f = normalizeOpenMeteo(mockForecast("2026-10-03", 7), FETCHED, "2026-10-03")!;
+    const text = contextText({ ...base, weather: [{ plot: "Back plot", days: f.days, recent: f.recent }] }, "Should I irrigate?");
+    expect(text).toContain(
+      "Estimated rain in the last 7 days (weather-model estimate for the area, not measured in the field): total 16.7 mm, 2 rainy days (2.5 mm or more); 2026-09-26 0 mm, 2026-09-27 12.4 mm",
+    );
+  });
+
+  it("puts IMD's official warnings first", () => {
+    const imd = normalizeImdWarnings(mockImdWarnings("2026-10-03"), { district: "Patna", state: "Bihar" }, "2026-10-03");
+    const days = normalizeOpenMeteo(mockForecast("2026-10-03"), FETCHED, "2026-10-03")!.days;
+    const text = contextText({ ...base, imd, weather: [{ plot: "Back plot", days }] }, "q");
+    expect(text).toContain("Official IMD (India Meteorological Department) warnings for Patna district, issued 2026-10-03. These are official");
+    expect(text).toContain("- 2026-10-03: orange — heavy rain, thunderstorm");
+    expect(text).toContain("- 2026-10-05: green — no warning");
+    expect(text.indexOf("Official IMD")).toBeLessThan(text.indexOf("Weather forecast from weather models"));
+    const imdOnly = contextText({ ...base, imd }, "q");
+    expect(imdOnly).toContain("Model forecast: not available to you");
   });
 
   it("says there is no weather when there is no forecast", () => {

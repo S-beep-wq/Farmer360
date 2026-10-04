@@ -26,7 +26,7 @@ function label<K extends string>(value: string | null, keys: readonly K[], label
 }
 
 export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/plots/[plotId]">) {
-  await requireFarmer();
+  const farmer = await requireFarmer();
   const { farmId, plotId } = await params;
   if (!isId(farmId) || !isId(plotId)) notFound();
 
@@ -102,13 +102,14 @@ export default async function PlotPage({ params }: PageProps<"/farms/[farmId]/pl
         <h2 id="plot-weather" className="text-2xl font-semibold">
           {t.weather.title}
         </h2>
-        {weatherPoint(plot) ? (
-          <Suspense fallback={<p className="text-lg text-stone-600">…</p>}>
-            <PlotWeather t={t} locale={locale} point={weatherPoint(plot)!} />
-          </Suspense>
-        ) : (
-          <p className="text-lg text-stone-700">{t.weather.noLocation}</p>
-        )}
+        <Suspense fallback={<p className="text-lg text-stone-600">…</p>}>
+          <PlotWeather
+            t={t}
+            locale={locale}
+            point={weatherPoint(plot)}
+            place={{ district: farm.district ?? farmer.district, state: farm.state ?? farmer.state }}
+          />
+        </Suspense>
       </section>
 
       <Card>

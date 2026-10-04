@@ -294,10 +294,26 @@ verified data, legal review of the data-use notice, SMS/DLT, production configur
 and its rules, the operator's name and grievance contact in `PRIVACY_CONTACT`, and native Hindi
 review (docs/FIELD_READINESS.md item 4).
 
+## Slice 20 — Recent rain and IMD warnings ✅ complete
+
+| Task | Status |
+|---|---|
+| Rain in the last 7 days on the plot page: total, rainy days (2.5 mm or more, IMD) and which days, labelled as a weather-model estimate (Open-Meteo `past_days`), not a rain-gauge reading | ✅ |
+| IMD district warnings adapter (5 days, colour level written out, hazards), strict checks; shown first on the plot page, also for plots without a location | ✅ (off until `IMD_API_URL` is set) |
+| "Official forecast from IMD" link (website; Mausam and Meghdoot apps) on every plot | ✅ |
+| Farm assistant gets estimated recent rain and IMD warnings (official first), with instructions on how to treat each | ✅ |
+| Unit, integration and end-to-end tests (stand-ins for both sources); `docs/WEATHER.md` | ✅ |
+
+No migration (nothing stored). **IMD is not switched on**: IMD's API needs a registered,
+whitelisted server and its documentation was blocked in the build environment, so the format
+follows IMD's public description and must be checked against one real response first
+(docs/WEATHER.md, "Before switching it on"). Recent rain is a model estimate; observed rain from
+IMD is a later option.
+
 ## Next slices (proposed, not started)
 
-1. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
-   a second, official source.
+1. Observed rainfall from IMD (district daily rainfall) once IMD access exists, replacing the
+   model estimate for past days.
 
 ## Open questions for the product owner
 

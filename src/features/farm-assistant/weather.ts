@@ -1,5 +1,6 @@
 import "server-only";
 
+import { fetchImdWarnings } from "@/features/weather/imd-provider";
 import { fetchForecast } from "@/features/weather/provider";
 
 import type { FarmContext } from "./context";
@@ -7,7 +8,8 @@ import type { FarmContext } from "./context";
 const MAX_PLOTS = 2;
 
 /**
- * Adds forecasts for the plots the question is about: plots with a current crop first, at most
+ * Adds IMD's warnings for the farmer's district (when available) and forecasts, with estimated
+ * recent rain, for the plots the question is about: plots with a current crop first, at most
  * two distinct (rounded) locations. Plots without a location, or a provider failure, simply leave
  * the forecast out; the assistant is then told it has no weather data.
  */
@@ -21,9 +23,13 @@ export async function withWeather(context: FarmContext): Promise<FarmContext> {
     if (!chosen.has(key)) chosen.set(key, { plot: p.name, point: p.point });
     if (chosen.size === MAX_PLOTS) break;
   }
-  const forecasts = await Promise.all([...chosen.values()].map(async (c) => ({ plot: c.plot, forecast: await fetchForecast(c.point) })));
+  const [forecasts, imd] = await Promise.all([
+    Promise.all([...chosen.values()].map(async (c) => ({ plot: c.plot, forecast: await fetchForecast(c.point) }))),
+    fetchImdWarnings({ district: context.district, state: context.state }),
+  ]);
   return {
     ...context,
-    weather: forecasts.filter((f) => f.forecast !== null).map((f) => ({ plot: f.plot, days: f.forecast!.days })),
+    imd,
+    weather: forecasts.filter((f) => f.forecast !== null).map((f) => ({ plot: f.plot, days: f.forecast!.days, recent: f.forecast!.recent })),
   };
 }

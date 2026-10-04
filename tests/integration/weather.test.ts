@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { todayInIndia } from "@/features/crops/dates";
 import { loadFarmContext } from "@/features/farm-assistant/repository";
 import { withWeather } from "@/features/farm-assistant/weather";
+import { fetchImdWarnings, isImdEnabled } from "@/features/weather/imd-provider";
 import { fetchForecast } from "@/features/weather/provider";
 import type { ServerSupabaseClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
@@ -54,6 +55,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   delete process.env.WEATHER_API_URL;
+  delete process.env.IMD_API_URL;
   mock.server.close();
   await deleteTestUsers(PHONES);
 });
@@ -65,7 +67,14 @@ describe("fetchForecast", () => {
     expect(f?.days[0].date).toBe(TODAY);
     const sent = mock.requests.at(-1)!;
     expect(sent.path).toMatch(/^\/v1\/forecast\?/);
-    expect(sent.body).toMatchObject({ latitude: "25.6", longitude: "85.15", timezone: "Asia/Kolkata", forecast_days: "7" });
+    expect(sent.body).toMatchObject({ latitude: "25.6", longitude: "85.15", timezone: "Asia/Kolkata", forecast_days: "7", past_days: "7" });
+  });
+
+  it("also gives the estimated rain of the 7 days before today", async () => {
+    const f = await fetchForecast({ lat: 25.6, lon: 85.15 });
+    expect(f?.recent?.days).toHaveLength(7);
+    expect(f!.recent!.days.at(-1)!.date < TODAY).toBe(true);
+    expect(f?.recent).toMatchObject({ totalMm: 16.7, rainyDays: 2 });
   });
 
   it("returns nothing (no crash) when the provider fails or answers oddly", async () => {
@@ -77,13 +86,41 @@ describe("fetchForecast", () => {
   });
 });
 
+describe("fetchImdWarnings", () => {
+  it("is off, without any request, unless IMD_API_URL is set", async () => {
+    delete process.env.IMD_API_URL;
+    const before = mock.requests.length;
+    expect(isImdEnabled()).toBe(false);
+    expect(await fetchImdWarnings({ district: "Patna", state: "Bihar" })).toBeNull();
+    expect(mock.requests.length).toBe(before);
+  });
+
+  it("gets the district's warnings when IMD is set up, and nothing for an unknown or ambiguous district", async () => {
+    process.env.IMD_API_URL = `${mock.url}/imd/warnings`;
+    const patna = await fetchImdWarnings({ district: "Patna", state: "Bihar" });
+    expect(patna).toMatchObject({ source: "IMD", district: "Patna", issuedOn: TODAY });
+    expect(patna?.days[0]).toEqual({ date: TODAY, level: "ORANGE", hazards: ["HEAVY_RAIN", "THUNDERSTORM"] });
+    expect(mock.requests.at(-1)!.path).toBe("/imd/warnings");
+    expect(await fetchImdWarnings({ district: "Nowhere", state: "Bihar" })).toBeNull();
+    expect(await fetchImdWarnings({ district: "Aurangabad", state: "Bihar" })).toBeNull();
+  });
+
+  it("returns nothing (no crash) when IMD cannot be reached", async () => {
+    process.env.IMD_API_URL = "http://127.0.0.1:1/imd";
+    expect(await fetchImdWarnings({ district: "Patna", state: "Bihar" })).toBeNull();
+    process.env.IMD_API_URL = `${mock.url}/imd/warnings`;
+  });
+});
+
 describe("the farm assistant's weather", () => {
   it("adds the forecast for a plot with a location, asking for its rounded point only", async () => {
     const context = await withWeather((await loadFarmContext(server(a), { ...opts, cropCycleId: pinnedCycle }))!);
     expect(context.weather).toHaveLength(1);
     expect(context.weather[0].plot).toBe("Pinned plot");
     expect(context.weather[0].days[1]).toMatchObject({ rainMm: 80.4, kind: "RAIN" });
-    expect(mock.requests.at(-1)!.body).toMatchObject({ latitude: "25.6", longitude: "85.15" });
+    expect(context.weather[0].recent).toMatchObject({ totalMm: 16.7, rainyDays: 2 });
+    expect(context.imd).toMatchObject({ district: "Vaishali" });
+    expect(mock.requests.findLast((r) => r.path.startsWith("/v1/forecast"))!.body).toMatchObject({ latitude: "25.6", longitude: "85.15" });
   });
 
   it("has no forecast for a plot without a location", async () => {

@@ -9,7 +9,8 @@ import { createServer, type Server } from "node:http";
 //   otherwise → a medium-confidence answer with two possible causes
 // It also stands in for the Open-Meteo forecast API (GET /v1/forecast), with a fixed 7-day forecast
 // from today (India time): day 2 has heavy rain (80 mm), day 3 is very hot (41 °C). Latitude -1
-// gives a server error and -2 an answer in the wrong shape.
+// gives a server error and -2 an answer in the wrong shape. With past_days it also returns the
+// days before today (MOCK_PAST_RAIN). GET /imd/warnings stands in for IMD's district warnings.
 // Farm assistant questions (recognised by its instructions) use the same [fail]/[refuse]/[garbled]
 // markers, plus [unsure] (low confidence, nothing to ask) and [missing] (asks the farmer back).
 
@@ -67,24 +68,48 @@ function assistantAnswer(question: string) {
   return MOCK_ASSISTANT_ANSWER;
 }
 
-/** An Open-Meteo-shaped forecast starting today in India. */
-export function mockForecast(start: string) {
-  const dates = Array.from({ length: 7 }, (_, i) => new Date(Date.parse(`${start}T00:00:00Z`) + i * 86_400_000).toISOString().slice(0, 10));
+/** Estimated rain on the 7 days before today, oldest first: 16.7 mm in all, 2 rainy days (2.5 mm or more). */
+export const MOCK_PAST_RAIN = [0, 12.4, 0, 0, 3.1, 0, 1.2];
+
+/**
+ * An Open-Meteo-shaped forecast starting today in India, preceded by `pastDays` (at most 7) days
+ * of estimated past weather, as Open-Meteo returns with `past_days`.
+ */
+export function mockForecast(start: string, pastDays = 0) {
+  const day = (offset: number) => new Date(Date.parse(`${start}T00:00:00Z`) + offset * 86_400_000).toISOString().slice(0, 10);
+  const past = MOCK_PAST_RAIN.slice(7 - pastDays);
+  const pastDates = past.map((_, i) => day(i - past.length));
+  const filler = (v: number) => past.map(() => v);
   return {
     latitude: 25.6,
     longitude: 85.15,
     timezone: "Asia/Kolkata",
     current: { time: `${start}T10:00`, temperature_2m: 31.2, weather_code: 2, wind_speed_10m: 9.4 },
     daily: {
-      time: dates,
-      weather_code: [1, 63, 0, 3, 80, 95, 61],
-      temperature_2m_max: [33.1, 29.4, 41.2, 34, 32.5, 31, 30.2],
-      temperature_2m_min: [24.2, 23.8, 27.5, 25, 24.6, 24, 23.9],
-      precipitation_sum: [0, 80.4, 0, 1.2, 12.5, 30, 3],
-      precipitation_probability_max: [5, 90, 0, 20, 60, 75, 40],
-      wind_speed_10m_max: [12.3, 30.1, 8, 10, 14, 35.5, 11],
+      time: [...pastDates, ...Array.from({ length: 7 }, (_, i) => day(i))],
+      weather_code: [...filler(3), 1, 63, 0, 3, 80, 95, 61],
+      temperature_2m_max: [...filler(32), 33.1, 29.4, 41.2, 34, 32.5, 31, 30.2],
+      temperature_2m_min: [...filler(24), 24.2, 23.8, 27.5, 25, 24.6, 24, 23.9],
+      precipitation_sum: [...past, 0, 80.4, 0, 1.2, 12.5, 30, 3],
+      precipitation_probability_max: [...filler(10), 5, 90, 0, 20, 60, 75, 40],
+      wind_speed_10m_max: [...filler(10), 12.3, 30.1, 8, 10, 14, 35.5, 11],
     },
   };
+}
+
+/**
+ * A list shaped like IMD's district warnings (see src/features/weather/imd.ts), issued `date`.
+ * Patna: orange (heavy rain, thunderstorm), then red (very heavy rain), green, yellow (heat wave),
+ * green. Vaishali: all green. Aurangabad is listed twice without a state, so it is ambiguous.
+ */
+export function mockImdWarnings(date: string) {
+  const green = { Day_1: "1", Day_2: "1", Day_3: "1", Day_4: "1", Day_5: "1", Day1_Color: "4", Day2_Color: "4", Day3_Color: "4", Day4_Color: "4", Day5_Color: "4" };
+  return [
+    { Obj_id: "1", Date: date, UPDATE_TIME: "13:30", District: "Patna", Day_1: "2,4", Day_2: "16", Day_3: "1", Day_4: "9", Day_5: "1", Day1_Color: "2", Day2_Color: "1", Day3_Color: "4", Day4_Color: "3", Day5_Color: "4" },
+    { Obj_id: "2", Date: date, UPDATE_TIME: "13:30", District: "Vaishali", ...green },
+    { Obj_id: "3", Date: date, UPDATE_TIME: "13:30", District: "Aurangabad", ...green },
+    { Obj_id: "4", Date: date, UPDATE_TIME: "13:30", District: "Aurangabad", ...green },
+  ];
 }
 
 function indiaToday() {
@@ -117,11 +142,16 @@ export async function startMockAnthropic(port = 0): Promise<{ server: Server; ur
     let raw = "";
     req.on("data", (chunk) => (raw += chunk));
     req.on("end", () => {
+      if (req.method === "GET" && req.url?.startsWith("/imd/warnings")) {
+        requests.push({ path: req.url, body: {} });
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify(mockImdWarnings(indiaToday())));
+      }
       if (req.method === "GET" && req.url?.startsWith("/v1/forecast")) {
         const url = new URL(req.url, "http://localhost");
         requests.push({ path: req.url, body: Object.fromEntries(url.searchParams) });
         res.writeHead(url.searchParams.get("latitude") === "-1" ? 500 : 200, { "content-type": "application/json" });
-        return res.end(JSON.stringify(url.searchParams.get("latitude") === "-2" ? { daily: "nope" } : mockForecast(indiaToday())));
+        return res.end(JSON.stringify(url.searchParams.get("latitude") === "-2" ? { daily: "nope" } : mockForecast(indiaToday(), Math.min(7, Number(url.searchParams.get("past_days") ?? 0)))));
       }
       const body = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       requests.push({ path: req.url ?? "", body });

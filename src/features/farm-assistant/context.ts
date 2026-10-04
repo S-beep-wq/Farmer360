@@ -1,4 +1,5 @@
-import type { ForecastDay } from "@/features/weather/forecast";
+import type { ForecastDay, RecentRain } from "@/features/weather/forecast";
+import type { ImdWarnings } from "@/features/weather/imd";
 import type { WeatherPoint } from "@/features/weather/location";
 import type { Locale } from "@/lib/i18n";
 
@@ -28,8 +29,10 @@ export type FarmContext = {
   state: string;
   /** `point` is used to fetch the weather and is never sent to the AI. */
   plots: { name: string; farm: string; area: string | null; soil: string | null; irrigation: string | null; point: WeatherPoint | null }[];
-  /** Forecasts for the plots in question; empty when there are none. */
-  weather: { plot: string; days: ForecastDay[] }[];
+  /** Forecasts (and estimated recent rain) for the plots in question; empty when there are none. */
+  weather: { plot: string; days: ForecastDay[]; recent?: RecentRain | null }[];
+  /** IMD's official warnings for the farmer's district, when available. */
+  imd?: ImdWarnings | null;
   crops: ContextCrop[];
   activities: { date: string; crop: string; type: string }[];
   observations: { date: string; crop: string; status: string; note: string | null }[];
@@ -65,11 +68,30 @@ function weatherLine(d: ForecastDay): string {
   return `${d.date}: ${d.kind.toLowerCase().replace("_", " ")}, ${rain}${chance}${temp}${wind}`;
 }
 
-function weatherSection(c: FarmContext): string[] {
-  if (c.weather.length === 0) return ["Weather: not available to you. Do not guess today's weather or forecast."];
+function recentLine(r: RecentRain): string {
+  const days = r.days.map((d) => `${d.date} ${d.rainMm === null ? "unknown" : `${d.rainMm} mm`}`).join(", ");
+  const total = r.totalMm === null ? "total unknown" : `total ${r.totalMm} mm, ${r.rainyDays} rainy days (2.5 mm or more)`;
+  return `  - Estimated rain in the last ${r.days.length} days (weather-model estimate for the area, not measured in the field): ${total}; ${days}`;
+}
+
+function imdSection(c: FarmContext): string[] {
+  if (!c.imd) return [];
   return [
+    `Official IMD (India Meteorological Department) warnings for ${c.imd.district} district, issued ${c.imd.issuedOn}. These are official and take priority over the model forecast:`,
+    ...c.imd.days.map((d) => `- ${d.date}: ${d.level.toLowerCase()}${d.hazards.length > 0 ? ` — ${d.hazards.map((h) => h.toLowerCase().replaceAll("_", " ")).join(", ")}` : " — no warning"}`),
+  ];
+}
+
+function weatherSection(c: FarmContext): string[] {
+  if (c.weather.length === 0) {
+    return c.imd
+      ? [...imdSection(c), "Model forecast: not available to you. Do not guess the weather beyond the IMD warnings."]
+      : ["Weather: not available to you. Do not guess today's weather or forecast."];
+  }
+  return [
+    ...imdSection(c),
     "Weather forecast from weather models (Open-Meteo). It is a forecast for the area, not a measurement, and can be wrong, especially beyond 3 days:",
-    ...c.weather.flatMap((w) => [`- Plot "${w.plot}":`, ...w.days.map((d) => `  - ${weatherLine(d)}`)]),
+    ...c.weather.flatMap((w) => [`- Plot "${w.plot}":`, ...(w.recent ? [recentLine(w.recent)] : []), ...w.days.map((d) => `  - ${weatherLine(d)}`)]),
   ];
 }
 

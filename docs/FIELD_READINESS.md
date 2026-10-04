@@ -71,7 +71,7 @@ Every page now sends `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referre
 | 4 | **Legal review of the data-use notice** (`/privacy`, `/consent`; text in `src/lib/i18n/messages/hi.ts` and `en.ts`, sections `privacy` and `consent`) against India's DPDP Act 2023 and its rules; name the operator and grievance contact in `PRIVACY_CONTACT`; bump `NOTICE_VERSION` after any change | Product + legal | Built in slice 19 from what the app actually does, but written by the development team. Without `PRIVACY_CONTACT` the notice says the contact will be added. Check also: storage location of data (Supabase/Vercel regions), retention of AI request data by Anthropic, and whether minors may use the app. |
 | 5 | **SMS provider for login** in the hosted Supabase project, with DLT registration (TRAI) for the sender ID and OTP template | Ops | Without it no one can log in. Test OTP numbers must not exist in production. |
 | 6 | **Production configuration**: hosted Supabase (`supabase db push` of all migrations), Vercel env (publishable key only — never `SUPABASE_SECRET_KEY`), `ANTHROPIC_API_KEY` with a spending limit, `OPEN_METEO_API_KEY` (commercial plan), licensed map tiles (`NEXT_PUBLIC_MAP_TILE_URL`) | Ops | Open-Meteo and OpenStreetMap tiles are free only for non-commercial/light use. |
-| 7 | **Check real outside services once**: one Open-Meteo forecast and one Claude answer from the deployed app | Ops | Both were built from their documentation and tested only against local stand-ins (the build environment blocks them). |
+| 7 | **Check real outside services once**: one Open-Meteo forecast (with past days) and one Claude answer from the deployed app; **register with IMD** for API access and check one real district-warning response before setting `IMD_API_URL` (docs/WEATHER.md) | Ops | All were built from documentation and tested only against local stand-ins (the build environment blocks them). IMD warnings stay off until checked. |
 | 8 | **Buyer verification process** (who checks buyers, how) | Product | Buyers show "Not verified" until the team marks them in the database. |
 | 9 | **Real-device test** on 2–3 low-end Android phones (2–3 GB RAM, Android 10+), Chrome: login, add plot with GPS, crop photo, weather, outdoors, on 2G/3G | Field team | Emulation is not a real phone, camera or GPS. |
 | 10 | **Backups and error monitoring**: Supabase point-in-time recovery, error logs reviewed weekly | Ops | Farmer records are the product's memory. |
@@ -97,6 +97,6 @@ Afterwards ask: What was hard? What did you not trust? What would make you open 
 ## 4. Known limitations to tell the pilot team
 
 - No offline mode: entries need a network connection at the time of saving.
-- Weather is a model forecast (not IMD); no observed rainfall yet.
+- Weather is a model forecast and past rain a model estimate (not rain-gauge readings); IMD warnings appear only once IMD access is set up and checked.
 - AI answers are one question at a time and are not saved.
 - Content-Security-Policy header is not set yet (needs a list of allowed tile/image hosts).
