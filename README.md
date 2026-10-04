@@ -40,7 +40,7 @@ cp .env.example .env.local  # then fill in the keys printed by: npx supabase sta
 npm run dev                 # http://localhost:3000
 ```
 
-Log in with a **test number**: `9999900001` … `9999900024`, code `123456`.
+Log in with a **test number**: `9999900001` … `9999900027`, code `123456`.
 These are configured only for the local stack in `supabase/config.toml` and never send an SMS.
 
 > If Docker cannot pull images from `public.ecr.aws` (some restricted networks), run
@@ -53,9 +53,14 @@ npm run check             # type check + lint + unit tests
 npm run test:integration  # database, auth and Row Level Security (needs db:start)
 npm run test:e2e          # browser tests of the farmer workflow (needs db:start)
 npm run build             # production build
+npm run test:perf         # low-end phone + slow 3G budgets, on the production build (after build)
 ```
 
-The integration and e2e tests refuse to run against anything but a local Supabase.
+The integration and e2e tests refuse to run against anything but a local Supabase. The e2e suite
+includes an automated accessibility check (axe-core) of every main screen.
+
+Before the pilot, see [`docs/FIELD_READINESS.md`](./docs/FIELD_READINESS.md): what was checked,
+and what people still need to decide and do.
 
 ## Database changes
 

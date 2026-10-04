@@ -264,9 +264,24 @@ tested against a stand-in. Check one real response before release.
 **No reference data is loaded**: the numbers must come from an agreed source for the pilot
 district (docs/CROP_REFERENCES.md). Until then planning works as in slice 14.
 
+## Field-readiness pass ✅ complete
+
+| Task | Status |
+|---|---|
+| Accessibility: axe-core WCAG 2.1 A/AA + 2.2 AA on 39 screen states (English, Hindi, buyer) in the e2e suite; map roles and link styling fixed | ✅ |
+| Low-end phone check (`npm run test:perf`): slow 3G + CPU ×4 on the production build, with budgets; all main screens within budget | ✅ |
+| Loading screen in the farmer's language on every page change | ✅ |
+| Hindi: consistent spelling, gender-neutral first-person texts, CSV export for native review | ✅ |
+| Security headers on every page | ✅ |
+| `docs/FIELD_READINESS.md`: results, pilot blockers (people and decisions), field test script, known limitations | ✅ |
+
+The pilot is blocked on the items in docs/FIELD_READINESS.md section 2 (district, Hindi review,
+verified data, data-use notice, SMS/DLT, production configuration).
+
 ## Next slices (proposed, not started)
 
-1. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
+1. Data-use notice and consent screen, once the text is agreed (docs/FIELD_READINESS.md item 4).
+2. Recent observed weather (rain in the last 7 days) and IMD district forecasts/agro-advisories as
    a second, official source.
 
 ## Open questions for the product owner

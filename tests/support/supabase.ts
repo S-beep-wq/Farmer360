@@ -32,6 +32,9 @@ export const TEST_PHONES = {
   e2eAssistant: "+919999900022",
   e2eWeather: "+919999900023",
   e2eReferences: "+919999900024",
+  e2eA11yFarmer: "+919999900025",
+  e2eA11yBuyer: "+919999900026",
+  perfFarmer: "+919999900027",
 } as const;
 
 function env(name: string): string {

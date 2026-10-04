@@ -135,6 +135,9 @@ test("insurance for another crop cannot be opened from this crop", async ({ page
   await signIn(page);
   await openCrop(page);
   const { data } = await adminClient().from("insurance_products").select("id").eq("slug", `${PREFIX}maize`).single();
-  const response = await page.goto(`${page.url()}/insurance/${(data as { id: string }).id}`);
-  expect(response?.status()).toBe(404);
+  // Pages stream behind the loading screen, so a missing item shows the not-found screen with a
+  // 200 status and a noindex tag (Next.js loading.tsx "Status Codes"); check what the farmer sees.
+  await page.goto(`${page.url()}/insurance/${(data as { id: string }).id}`);
+  await expect(page.getByRole("heading", { name: "This page was not found." })).toBeVisible();
+  await expect(page.getByText("Maize cover")).toHaveCount(0);
 });

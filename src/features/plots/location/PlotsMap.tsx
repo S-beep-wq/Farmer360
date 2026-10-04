@@ -58,7 +58,8 @@ export function PlotsMap({ plots, label }: { plots: MapPlot[]; label: string }) 
   return (
     <div
       ref={containerRef}
-      role="img"
+      // A region, not an image: Leaflet puts focusable zoom buttons and links inside.
+      role="region"
       aria-label={label}
       data-testid="plots-map"
       className="h-72 w-full overflow-hidden rounded-2xl border-2 border-stone-200 bg-stone-100"

@@ -7,6 +7,7 @@ export const en = {
     tagline: "Your farm, in one place",
   },
   common: {
+    loading: "Loading…",
     saveChanges: "Save changes",
     edit: "Change details",
     save: "Save",

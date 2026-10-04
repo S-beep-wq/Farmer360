@@ -147,6 +147,8 @@ test("old information is flagged, and the Hindi text is shown in Hindi", async (
 
 test("an unknown scheme address shows not found", async ({ page }) => {
   await signIn(page);
-  const response = await page.goto("/schemes/not-a-scheme");
-  expect(response?.status()).toBe(404);
+  // Streamed behind the loading screen: the not-found screen with a noindex tag (see loading.tsx docs).
+  await page.goto("/schemes/not-a-scheme");
+  await expect(page.getByRole("heading", { name: "This page was not found." })).toBeVisible();
+  expect(await page.locator('meta[name="robots"][content="noindex"]').count()).toBeGreaterThan(0);
 });

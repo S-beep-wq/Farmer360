@@ -18,7 +18,9 @@
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts",
     "schemes:import": "node --env-file=.env.local scripts/import-official-data.mjs schemes",
     "insurance:import": "node --env-file=.env.local scripts/import-official-data.mjs insurance",
-    "crop-references:import": "node --env-file=.env.local scripts/import-official-data.mjs crop-references"
+    "crop-references:import": "node --env-file=.env.local scripts/import-official-data.mjs crop-references",
+    "test:perf": "playwright test --config playwright.perf.config.ts",
+    "translations:export": "node scripts/export-translations.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -33,6 +35,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.22",

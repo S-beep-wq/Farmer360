@@ -212,6 +212,7 @@ export function PlotLocationPicker({
       <div
         ref={containerRef}
         data-testid="plot-location-map"
+        role="region"
         aria-label={t.plots.locationTitle}
         className={`h-80 w-full overflow-hidden rounded-2xl border-2 bg-stone-100 ${drawing ? "border-green-700 cursor-crosshair" : "border-stone-200"}`}
       />
